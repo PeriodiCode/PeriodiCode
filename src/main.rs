@@ -15,6 +15,8 @@ use crate::numerical_util::power;
 mod numerical_util;
 
 fn main() {
+    assert_eq!(parse_numeric_literal(".6r142857").to_string(), "43/70");
+    assert_eq!(parse_numeric_literal(".r142857").to_string(), "1/7");
     assert_eq!(parse_numeric_literal("0.1r6").to_string(), "1/6");
     assert_eq!(parse_numeric_literal("12.").to_string(), "12");
     assert_eq!(parse_numeric_literal("12").to_string(), "12");
@@ -22,7 +24,6 @@ fn main() {
     assert_eq!(parse_numeric_literal("12.1r6").to_string(), "73/6");
     assert_eq!(parse_numeric_literal(".1r6").to_string(), "1/6");
     assert_eq!(parse_numeric_literal(".r3").to_string(), "1/3");
-    assert_eq!(parse_numeric_literal(".r142857").to_string(), "1/7");
     assert_eq!(
         parse_numeric_literal_with_radix_context(".r0313452421", 6).to_string(),
         "1/11"
@@ -108,10 +109,7 @@ fn parse_numeric_literal_with_radix_context(input: &str, radix_context: u32) -> 
     let original_input = input;
     let (input, literal_own_radix) = strip_radix_prefix(input);
 
-    println!(
-        "PeriodiCode:DEC{:<2}$ {}",
-        radix_context, original_input
-    );
+    println!("PeriodiCode:DEC{:<2}$ {}", radix_context, original_input);
     parse_numeric_literal_with_both_contexts(input, radix_context, literal_own_radix)
 }
 
@@ -243,6 +241,12 @@ fn parse_numeric_literal_with_both_contexts(
         print!(")")
     }
 
+    println!();
+
+    print!("digt: ");
+
+    print_digit_expansion_radix(&ans, external_radix_context);
+
     println!("\n");
 
     ans
@@ -264,6 +268,50 @@ fn print_continued_fraction_radix(ans: &BigRational, external_radix_context: u32
                 .collect::<Vec<_>>()
                 .join(", ")
         );
+    }
+}
+
+fn print_digit_expansion_radix(ans: &BigRational, external_radix_context: u32) {
+    if ans < &BigRational::zero() {
+        print!("-");
+        print_digit_expansion_radix(&-ans, external_radix_context);
+        return;
+    }
+
+    print!(
+        "{}",
+        floor_as_bigint(ans).to_str_radix(external_radix_context)
+    );
+
+    let mut f = ans - ans.floor();
+    if f.is_zero() {
+        return;
+    }
+
+    print!(".");
+
+    let mut f_list = vec![];
+    let mut digits = vec![];
+
+    loop {
+        f_list.push(f.clone());
+
+        f *= BigInt::from(external_radix_context);
+
+        let digit = floor_as_bigint(&f).to_str_radix(external_radix_context);
+        digits.push(digit.clone());
+
+        f = f.clone() - f.floor();
+        if f.is_zero() {
+            print!("{}", digits.join(""));
+            return;
+        }
+
+        if f_list.contains(&f) {
+            let pos = f_list.iter().position(|k| k == &f).unwrap();
+            print!("{}r{}", digits[0..pos].join(""), digits[pos..].join(""));
+            return;
+        }
     }
 }
 
