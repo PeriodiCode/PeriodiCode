@@ -65,7 +65,10 @@ fn main() {
     assert_eq!(parse_numeric_literal("0t100.").to_string(), "9");
     assert_eq!(parse_numeric_literal("0b100.").to_string(), "4");
 
-    assert_eq!(parse_numeric_literal("0x1.p10").to_string(), "1024");
+    assert_eq!(parse_numeric_literal("0x1.p-10").to_string(), "1/1024");
+    assert_eq!(parse_numeric_literal("0b11.p-10").to_string(), "3/1024");
+    assert_eq!(parse_numeric_literal("0x11.p-10").to_string(), "17/1024");
+    assert_eq!(parse_numeric_literal("0d11.p-10").to_string(), "11/1024");
     assert_eq!(
         parse_numeric_literal_with_radix_context("0x1.p10", 6).to_string(),
         "64"
@@ -115,6 +118,10 @@ fn main() {
 [radix_context: 10 in decimal] 0t100. => 9
 [radix_context: 10 in decimal] 0b100. => 4
 [radix_context: 10 in decimal] 0x1.p10 => 1024
+[radix_context: 10 in decimal] 0x1.p-10 => 1/1024
+[radix_context: 10 in decimal] 0b11.p-10 => 3/1024
+[radix_context: 10 in decimal] 0x11.p-10 => 17/1024
+[radix_context: 10 in decimal] 0d11.p-10 => 11/1024
 [radix_context:  6 in decimal] 0x1.p10 => 64
 [radix_context: 10 in decimal] 0s.r0313452421 => 1/11
 [radix_context: 10 in decimal] 0.1r6e1 => 5/3

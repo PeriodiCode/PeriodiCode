@@ -46,6 +46,10 @@ fn main() {
     assert_eq!(parse_numeric_literal("0b100.").to_string(), "4");
 
     assert_eq!(parse_numeric_literal("0x1.p10").to_string(), "1024");
+    assert_eq!(parse_numeric_literal("0x1.p-10").to_string(), "1/1024");
+    assert_eq!(parse_numeric_literal("0b11.p-10").to_string(), "3/1024");
+    assert_eq!(parse_numeric_literal("0x11.p-10").to_string(), "17/1024");
+    assert_eq!(parse_numeric_literal("0d11.p-10").to_string(), "11/1024");
     assert_eq!(
         parse_numeric_literal_with_radix_context("0x1.p10", 6).to_string(),
         "64"
@@ -121,11 +125,11 @@ fn parse_numeric_literal_with_both_contexts(
      */
 
     static RE_ALLOWING_E: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(r"(?<integral>[0-9a-dA-D]*)(?<dot>\.(?<before_rep>[0-9a-dA-D]*)(?<rep_digits>(r[0-9a-dA-D]*)?))?(?<exponent>((e|xp|p)[0-9a-dA-D]+)?)").unwrap()
+        Regex::new(r"(?<integral>[0-9a-dA-D]*)(?<dot>\.(?<before_rep>[0-9a-dA-D]*)(?<rep_digits>(r[0-9a-dA-D]*)?))?(?<exponent>((e|xp|p)-?[0-9a-dA-D]+)?)").unwrap()
     });
 
     static RE_FORBIDDING_E: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(r"(?<integral>[0-9a-oA-O]*)(?<dot>\.(?<before_rep>[0-9a-oA-O]*)(?<rep_digits>(r[0-9a-oA-O]*)?))?(?<exponent>((xp|p)[0-9a-oA-O]+)?)").unwrap()
+        Regex::new(r"(?<integral>[0-9a-oA-O]*)(?<dot>\.(?<before_rep>[0-9a-oA-O]*)(?<rep_digits>(r[0-9a-oA-O]*)?))?(?<exponent>((xp|p)-?[0-9a-oA-O]+)?)").unwrap()
     });
 
     let literal_own_radix = literal_own_radix.unwrap_or(external_radix_context);
