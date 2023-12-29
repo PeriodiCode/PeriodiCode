@@ -30,41 +30,53 @@ You can choose what base/radix you use to represent numbers
 
 ```rs
 fn main() {
-    assert_eq!(parse_dot_literal("0.1r6").to_string(), "1/6");
-    assert_eq!(parse_dot_literal("12.").to_string(), "12");
-    assert_eq!(parse_dot_literal("12.1").to_string(), "121/10");
-    assert_eq!(parse_dot_literal("12.1r6").to_string(), "73/6");
-    assert_eq!(parse_dot_literal(".1r6").to_string(), "1/6");
-    assert_eq!(parse_dot_literal(".r3").to_string(), "1/3");
-    assert_eq!(parse_dot_literal(".r142857").to_string(), "1/7");
+    assert_eq!(parse_numeric_literal("0.1r6").to_string(), "1/6");
+    assert_eq!(parse_numeric_literal("12.").to_string(), "12");
+    assert_eq!(parse_numeric_literal("12").to_string(), "12");
+    assert_eq!(parse_numeric_literal("12.1").to_string(), "121/10");
+    assert_eq!(parse_numeric_literal("12.1r6").to_string(), "73/6");
+    assert_eq!(parse_numeric_literal(".1r6").to_string(), "1/6");
+    assert_eq!(parse_numeric_literal(".r3").to_string(), "1/3");
+    assert_eq!(parse_numeric_literal(".r142857").to_string(), "1/7");
     assert_eq!(
-        parse_dot_literal_with_radix_context(".r0313452421", 6).to_string(),
+        parse_numeric_literal_with_radix_context(".r0313452421", 6).to_string(),
         "1/11"
     );
 
-    assert_eq!(parse_dot_literal("0v100.").to_string(), "400");
-    assert_eq!(parse_dot_literal("0x100.").to_string(), "256");
-    assert_eq!(parse_dot_literal("0z100.").to_string(), "144");
-    assert_eq!(parse_dot_literal("0d100.").to_string(), "100");
-    assert_eq!(parse_dot_literal("0o100.").to_string(), "64");
-    assert_eq!(parse_dot_literal("0s100.").to_string(), "36");
-    assert_eq!(parse_dot_literal("0quin100.").to_string(), "25");
-    assert_eq!(parse_dot_literal("0quat100.").to_string(), "16");
-    assert_eq!(parse_dot_literal("0t100.").to_string(), "9");
-    assert_eq!(parse_dot_literal("0b100.").to_string(), "4");
+    assert_eq!(parse_numeric_literal("0v100").to_string(), "400");
+    assert_eq!(parse_numeric_literal("0x100").to_string(), "256");
+    assert_eq!(parse_numeric_literal("0z100").to_string(), "144");
+    assert_eq!(parse_numeric_literal("0d100").to_string(), "100");
+    assert_eq!(parse_numeric_literal("0o100").to_string(), "64");
+    assert_eq!(parse_numeric_literal("0s100").to_string(), "36");
+    assert_eq!(parse_numeric_literal("0quin100").to_string(), "25");
+    assert_eq!(parse_numeric_literal("0quat100").to_string(), "16");
+    assert_eq!(parse_numeric_literal("0t100").to_string(), "9");
+    assert_eq!(parse_numeric_literal("0b100").to_string(), "4");
 
-    assert_eq!(parse_dot_literal("0x1.p10").to_string(), "1024");
+    assert_eq!(parse_numeric_literal("0v100.").to_string(), "400");
+    assert_eq!(parse_numeric_literal("0x100.").to_string(), "256");
+    assert_eq!(parse_numeric_literal("0z100.").to_string(), "144");
+    assert_eq!(parse_numeric_literal("0d100.").to_string(), "100");
+    assert_eq!(parse_numeric_literal("0o100.").to_string(), "64");
+    assert_eq!(parse_numeric_literal("0s100.").to_string(), "36");
+    assert_eq!(parse_numeric_literal("0quin100.").to_string(), "25");
+    assert_eq!(parse_numeric_literal("0quat100.").to_string(), "16");
+    assert_eq!(parse_numeric_literal("0t100.").to_string(), "9");
+    assert_eq!(parse_numeric_literal("0b100.").to_string(), "4");
+
+    assert_eq!(parse_numeric_literal("0x1.p10").to_string(), "1024");
     assert_eq!(
-        parse_dot_literal_with_radix_context("0x1.p10", 6).to_string(),
+        parse_numeric_literal_with_radix_context("0x1.p10", 6).to_string(),
         "64"
     );
 
-    assert_eq!(parse_dot_literal("0s.r0313452421").to_string(), "1/11");
+    assert_eq!(parse_numeric_literal("0s.r0313452421").to_string(), "1/11");
 
-    assert_eq!(parse_dot_literal("0.1r6e1").to_string(), "5/3");
-    assert_eq!(parse_dot_literal("0.1r6xp1").to_string(), "5/3");
+    assert_eq!(parse_numeric_literal("0.1r6e1").to_string(), "5/3");
+    assert_eq!(parse_numeric_literal("0.1r6xp1").to_string(), "5/3");
     assert_eq!(
-        parse_dot_literal_with_radix_context("1.0p10", 10).to_string(),
+        parse_numeric_literal_with_radix_context("1.0p10", 10).to_string(),
         "1024"
     );
 }
@@ -75,12 +87,23 @@ fn main() {
 ```
 [radix_context: 10 in decimal] 0.1r6 => 1/6
 [radix_context: 10 in decimal] 12. => 12
+[radix_context: 10 in decimal] 12 => 12
 [radix_context: 10 in decimal] 12.1 => 121/10
 [radix_context: 10 in decimal] 12.1r6 => 73/6
 [radix_context: 10 in decimal] .1r6 => 1/6
 [radix_context: 10 in decimal] .r3 => 1/3
 [radix_context: 10 in decimal] .r142857 => 1/7
 [radix_context:  6 in decimal] .r0313452421 => 1/11
+[radix_context: 10 in decimal] 0v100 => 400
+[radix_context: 10 in decimal] 0x100 => 256
+[radix_context: 10 in decimal] 0z100 => 144
+[radix_context: 10 in decimal] 0d100 => 100
+[radix_context: 10 in decimal] 0o100 => 64
+[radix_context: 10 in decimal] 0s100 => 36
+[radix_context: 10 in decimal] 0quin100 => 25
+[radix_context: 10 in decimal] 0quat100 => 16
+[radix_context: 10 in decimal] 0t100 => 9
+[radix_context: 10 in decimal] 0b100 => 4
 [radix_context: 10 in decimal] 0v100. => 400
 [radix_context: 10 in decimal] 0x100. => 256
 [radix_context: 10 in decimal] 0z100. => 144

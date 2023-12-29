@@ -10,41 +10,53 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 
 fn main() {
-    assert_eq!(parse_dot_literal("0.1r6").to_string(), "1/6");
-    assert_eq!(parse_dot_literal("12.").to_string(), "12");
-    assert_eq!(parse_dot_literal("12.1").to_string(), "121/10");
-    assert_eq!(parse_dot_literal("12.1r6").to_string(), "73/6");
-    assert_eq!(parse_dot_literal(".1r6").to_string(), "1/6");
-    assert_eq!(parse_dot_literal(".r3").to_string(), "1/3");
-    assert_eq!(parse_dot_literal(".r142857").to_string(), "1/7");
+    assert_eq!(parse_numeric_literal("0.1r6").to_string(), "1/6");
+    assert_eq!(parse_numeric_literal("12.").to_string(), "12");
+    assert_eq!(parse_numeric_literal("12").to_string(), "12");
+    assert_eq!(parse_numeric_literal("12.1").to_string(), "121/10");
+    assert_eq!(parse_numeric_literal("12.1r6").to_string(), "73/6");
+    assert_eq!(parse_numeric_literal(".1r6").to_string(), "1/6");
+    assert_eq!(parse_numeric_literal(".r3").to_string(), "1/3");
+    assert_eq!(parse_numeric_literal(".r142857").to_string(), "1/7");
     assert_eq!(
-        parse_dot_literal_with_radix_context(".r0313452421", 6).to_string(),
+        parse_numeric_literal_with_radix_context(".r0313452421", 6).to_string(),
         "1/11"
     );
 
-    assert_eq!(parse_dot_literal("0v100.").to_string(), "400");
-    assert_eq!(parse_dot_literal("0x100.").to_string(), "256");
-    assert_eq!(parse_dot_literal("0z100.").to_string(), "144");
-    assert_eq!(parse_dot_literal("0d100.").to_string(), "100");
-    assert_eq!(parse_dot_literal("0o100.").to_string(), "64");
-    assert_eq!(parse_dot_literal("0s100.").to_string(), "36");
-    assert_eq!(parse_dot_literal("0quin100.").to_string(), "25");
-    assert_eq!(parse_dot_literal("0quat100.").to_string(), "16");
-    assert_eq!(parse_dot_literal("0t100.").to_string(), "9");
-    assert_eq!(parse_dot_literal("0b100.").to_string(), "4");
+    assert_eq!(parse_numeric_literal("0v100").to_string(), "400");
+    assert_eq!(parse_numeric_literal("0x100").to_string(), "256");
+    assert_eq!(parse_numeric_literal("0z100").to_string(), "144");
+    assert_eq!(parse_numeric_literal("0d100").to_string(), "100");
+    assert_eq!(parse_numeric_literal("0o100").to_string(), "64");
+    assert_eq!(parse_numeric_literal("0s100").to_string(), "36");
+    assert_eq!(parse_numeric_literal("0quin100").to_string(), "25");
+    assert_eq!(parse_numeric_literal("0quat100").to_string(), "16");
+    assert_eq!(parse_numeric_literal("0t100").to_string(), "9");
+    assert_eq!(parse_numeric_literal("0b100").to_string(), "4");
 
-    assert_eq!(parse_dot_literal("0x1.p10").to_string(), "1024");
+    assert_eq!(parse_numeric_literal("0v100.").to_string(), "400");
+    assert_eq!(parse_numeric_literal("0x100.").to_string(), "256");
+    assert_eq!(parse_numeric_literal("0z100.").to_string(), "144");
+    assert_eq!(parse_numeric_literal("0d100.").to_string(), "100");
+    assert_eq!(parse_numeric_literal("0o100.").to_string(), "64");
+    assert_eq!(parse_numeric_literal("0s100.").to_string(), "36");
+    assert_eq!(parse_numeric_literal("0quin100.").to_string(), "25");
+    assert_eq!(parse_numeric_literal("0quat100.").to_string(), "16");
+    assert_eq!(parse_numeric_literal("0t100.").to_string(), "9");
+    assert_eq!(parse_numeric_literal("0b100.").to_string(), "4");
+
+    assert_eq!(parse_numeric_literal("0x1.p10").to_string(), "1024");
     assert_eq!(
-        parse_dot_literal_with_radix_context("0x1.p10", 6).to_string(),
+        parse_numeric_literal_with_radix_context("0x1.p10", 6).to_string(),
         "64"
     );
 
-    assert_eq!(parse_dot_literal("0s.r0313452421").to_string(), "1/11");
+    assert_eq!(parse_numeric_literal("0s.r0313452421").to_string(), "1/11");
 
-    assert_eq!(parse_dot_literal("0.1r6e1").to_string(), "5/3");
-    assert_eq!(parse_dot_literal("0.1r6xp1").to_string(), "5/3");
+    assert_eq!(parse_numeric_literal("0.1r6e1").to_string(), "5/3");
+    assert_eq!(parse_numeric_literal("0.1r6xp1").to_string(), "5/3");
     assert_eq!(
-        parse_dot_literal_with_radix_context("1.0p10", 10).to_string(),
+        parse_numeric_literal_with_radix_context("1.0p10", 10).to_string(),
         "1024"
     );
 }
@@ -53,8 +65,8 @@ fn bigint_from_possibly_empty_str_radix(str: &str, radix: u32) -> Result<BigInt,
     BigInt::from_str_radix(if str.is_empty() { "0" } else { str }, radix)
 }
 
-fn parse_dot_literal(input: &str) -> BigRational {
-    parse_dot_literal_with_radix_context(input, 10)
+fn parse_numeric_literal(input: &str) -> BigRational {
+    parse_numeric_literal_with_radix_context(input, 10)
 }
 
 fn strip_radix_prefix(input: &str) -> (&str, Option<u32>) {
@@ -83,7 +95,7 @@ fn strip_radix_prefix(input: &str) -> (&str, Option<u32>) {
     }
 }
 
-fn parse_dot_literal_with_radix_context(input: &str, radix_context: u32) -> BigRational {
+fn parse_numeric_literal_with_radix_context(input: &str, radix_context: u32) -> BigRational {
     let original_input = input;
     let (input, literal_own_radix) = strip_radix_prefix(input);
 
@@ -91,10 +103,10 @@ fn parse_dot_literal_with_radix_context(input: &str, radix_context: u32) -> BigR
         "[radix_context: {:>2} in decimal] {} => ",
         radix_context, original_input
     );
-    parse_dot_literal_with_both_contexts(input, radix_context, literal_own_radix)
+    parse_numeric_literal_with_both_contexts(input, radix_context, literal_own_radix)
 }
 
-fn parse_dot_literal_with_both_contexts(
+fn parse_numeric_literal_with_both_contexts(
     input: &str,
     external_radix_context: u32,
     literal_own_radix: Option<u32>,
@@ -109,11 +121,11 @@ fn parse_dot_literal_with_both_contexts(
      */
 
     static RE_ALLOWING_E: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(r"(?<integral>[0-9a-dA-D]*)\.(?<before_rep>[0-9a-dA-D]*)(?<rep_digits>(r[0-9a-dA-D]*)?)(?<exponent>((e|xp|p)[0-9a-dA-D]+)?)").unwrap()
+        Regex::new(r"(?<integral>[0-9a-dA-D]*)(?<dot>\.(?<before_rep>[0-9a-dA-D]*)(?<rep_digits>(r[0-9a-dA-D]*)?))?(?<exponent>((e|xp|p)[0-9a-dA-D]+)?)").unwrap()
     });
 
     static RE_FORBIDDING_E: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(r"(?<integral>[0-9a-oA-O]*)\.(?<before_rep>[0-9a-oA-O]*)(?<rep_digits>(r[0-9a-oA-O]*)?)(?<exponent>((xp|p)[0-9a-oA-O]+)?)").unwrap()
+        Regex::new(r"(?<integral>[0-9a-oA-O]*)(?<dot>\.(?<before_rep>[0-9a-oA-O]*)(?<rep_digits>(r[0-9a-oA-O]*)?))?(?<exponent>((xp|p)[0-9a-oA-O]+)?)").unwrap()
     });
 
     let literal_own_radix = literal_own_radix.unwrap_or(external_radix_context);
@@ -126,8 +138,14 @@ fn parse_dot_literal_with_both_contexts(
 
     // let whole = caps.get(0).unwrap().as_str();
     let integral = caps.name("integral").unwrap().as_str();
-    let before_rep = caps.name("before_rep").unwrap().as_str();
-    let repeating_digits = caps.name("rep_digits").unwrap().as_str();
+    let (before_rep, repeating_digits) = match caps.name("dot") {
+        Some(_) => (
+            caps.name("before_rep").unwrap().as_str(),
+            caps.name("rep_digits").unwrap().as_str(),
+        ),
+        None => ("", ""),
+    };
+
     let exponent = caps.name("exponent").unwrap().as_str();
 
     // println!("whole: {:?}", whole);
