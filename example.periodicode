@@ -56,11 +56,11 @@
 @assert_eq($_, 36)
 
 # quinary
-0quin100
+0qn100
 @assert_eq($_, 25)
 
 # quaternary
-0quat100
+0qt100
 @assert_eq($_, 16)
 
 # ternary
@@ -93,10 +93,10 @@
 0s100.
 @assert_eq($_, 36)
 
-0quin100.
+0qn100.
 @assert_eq($_, 25)
 
-0quat100.
+0qt100.
 @assert_eq($_, 16)
 
 0t100.

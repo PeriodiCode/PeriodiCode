@@ -21,8 +21,8 @@ You can choose what base/radix you use to represent numbers
   - `0d`: decimal (base 10)
   - `0o`: octal (base 8)
   - `0s`: senary (base 6)
-  - `0quin`: quinary (base 5)
-  - `0quat`: quaternary (base 4)
+  - `0qn`: quinary (base 5)
+  - `0qt`: quaternary (base 4)
   - `0t`: trinary (base 3)
   - `0b`: binary (base 2)
 
@@ -102,11 +102,11 @@ Hence, in decimal context, 0x1.0p10 == 1024 and 0x11p-10 == 17/1024
 @assert_eq($_, 36)
 
 # quinary
-0quin100
+0qn100
 @assert_eq($_, 25)
 
 # quaternary
-0quat100
+0qt100
 @assert_eq($_, 16)
 
 # ternary
@@ -139,10 +139,10 @@ Hence, in decimal context, 0x1.0p10 == 1024 and 0x11p-10 == 17/1024
 0s100.
 @assert_eq($_, 36)
 
-0quin100.
+0qn100.
 @assert_eq($_, 25)
 
-0quat100.
+0qt100.
 @assert_eq($_, 16)
 
 0t100.
@@ -315,7 +315,7 @@ digt: 36
 PeriodiCode:DEC10$ @assert_eq($_, 36)
 ok
 
-PeriodiCode:DEC10$ 0quin100
+PeriodiCode:DEC10$ 0qn100
 frac: 25
 cont: [25]
 digt: 25
@@ -323,7 +323,7 @@ digt: 25
 PeriodiCode:DEC10$ @assert_eq($_, 25)
 ok
 
-PeriodiCode:DEC10$ 0quat100
+PeriodiCode:DEC10$ 0qt100
 frac: 16
 cont: [16]
 digt: 16
@@ -395,7 +395,7 @@ digt: 36
 PeriodiCode:DEC10$ @assert_eq($_, 36)
 ok
 
-PeriodiCode:DEC10$ 0quin100.
+PeriodiCode:DEC10$ 0qn100.
 frac: 25
 cont: [25]
 digt: 25
@@ -403,7 +403,7 @@ digt: 25
 PeriodiCode:DEC10$ @assert_eq($_, 25)
 ok
 
-PeriodiCode:DEC10$ 0quat100.
+PeriodiCode:DEC10$ 0qt100.
 frac: 16
 cont: [16]
 digt: 16

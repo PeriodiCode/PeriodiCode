@@ -30,6 +30,7 @@ impl Interpreter {
     fn execute_expression(&mut self, input: &str) {
         if input.trim_start().starts_with('#') || input.trim().is_empty() {
             /* line-comment; ignore */
+            println!("PeriodiCode:DEC{:<2}$ {}", self.radix_context, input);
         } else if input.starts_with("@assert_eq($_, ") {
             let second_arg = input
                 .strip_prefix("@assert_eq($_, ")
@@ -104,8 +105,8 @@ fn test() {
     assert_eq!(parse_numeric_literal("0d100").to_string(), "100");
     assert_eq!(parse_numeric_literal("0o100").to_string(), "64");
     assert_eq!(parse_numeric_literal("0s100").to_string(), "36");
-    assert_eq!(parse_numeric_literal("0quin100").to_string(), "25");
-    assert_eq!(parse_numeric_literal("0quat100").to_string(), "16");
+    assert_eq!(parse_numeric_literal("0qn100").to_string(), "25");
+    assert_eq!(parse_numeric_literal("0qt100").to_string(), "16");
     assert_eq!(parse_numeric_literal("0t100").to_string(), "9");
     assert_eq!(parse_numeric_literal("0b100").to_string(), "4");
 
@@ -115,8 +116,8 @@ fn test() {
     assert_eq!(parse_numeric_literal("0d100.").to_string(), "100");
     assert_eq!(parse_numeric_literal("0o100.").to_string(), "64");
     assert_eq!(parse_numeric_literal("0s100.").to_string(), "36");
-    assert_eq!(parse_numeric_literal("0quin100.").to_string(), "25");
-    assert_eq!(parse_numeric_literal("0quat100.").to_string(), "16");
+    assert_eq!(parse_numeric_literal("0qn100.").to_string(), "25");
+    assert_eq!(parse_numeric_literal("0qt100.").to_string(), "16");
     assert_eq!(parse_numeric_literal("0t100.").to_string(), "9");
     assert_eq!(parse_numeric_literal("0b100.").to_string(), "4");
 
@@ -161,10 +162,10 @@ fn strip_radix_prefix(input: &str) -> (&str, Option<u32>) {
         (input.strip_prefix("0o").unwrap(), Some(8))
     } else if input.starts_with("0s") {
         (input.strip_prefix("0s").unwrap(), Some(6))
-    } else if input.starts_with("0quin") {
-        (input.strip_prefix("0quin").unwrap(), Some(5))
-    } else if input.starts_with("0quat") {
-        (input.strip_prefix("0quat").unwrap(), Some(4))
+    } else if input.starts_with("0qn") {
+        (input.strip_prefix("0qn").unwrap(), Some(5))
+    } else if input.starts_with("0qt") {
+        (input.strip_prefix("0qt").unwrap(), Some(4))
     } else if input.starts_with("0t") {
         (input.strip_prefix("0t").unwrap(), Some(3))
     } else if input.starts_with("0b") {
