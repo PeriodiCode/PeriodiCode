@@ -29,7 +29,7 @@ impl Interpreter {
 
     fn execute_expression(&mut self, input: &str) {
         println!(
-            "\x1b[1;32mPeriodiCode\x1b[00m:\x1b[1;34mDEC{:<2}\x1b[00m> {}",
+            "\x1b[1;34mPeriodiCode\x1b[00m:\x1b[1;32mDEC{:<2}\x1b[00m> {}",
             self.radix_context, input
         );
 
