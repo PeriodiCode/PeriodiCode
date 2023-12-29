@@ -66,7 +66,7 @@ impl Interpreter {
             }
         } else {
             println!("PeriodiCode:DEC{:<2}$ {}", self.radix_context, input);
-            let ans = parse_numeric_literal_with_radix_context(input, self.radix_context);
+            let ans = parse_numeric_literal_with_radix_context(input, self.radix_context).unwrap();
             print_rational_summary(&ans, self.radix_context);
             self.previous_value = Some(ans);
         }
@@ -117,9 +117,9 @@ fn strip_radix_prefix(input: &str) -> (&str, Option<u32>) {
     }
 }
 
-fn parse_numeric_literal_with_radix_context(input: &str, radix_context: u32) -> BigRational {
+fn parse_numeric_literal_with_radix_context(input: &str, radix_context: u32) -> Result<BigRational, &'static str> {
     let (input, literal_own_radix) = strip_radix_prefix(input);
-    parse_numeric_literal_with_both_contexts(input, radix_context, literal_own_radix).unwrap()
+    parse_numeric_literal_with_both_contexts(input, radix_context, literal_own_radix)
 }
 
 fn parse_numeric_literal_with_both_contexts(
@@ -147,9 +147,9 @@ fn parse_numeric_literal_with_both_contexts(
     let literal_own_radix = literal_own_radix.unwrap_or(external_radix_context);
 
     let caps = if literal_own_radix < 15 {
-        RE_ALLOWING_E.captures(input).unwrap()
+        RE_ALLOWING_E.captures(input).ok_or("No parse as a numeric literal")?
     } else {
-        RE_FORBIDDING_E.captures(input).unwrap()
+        RE_FORBIDDING_E.captures(input).ok_or("No parse as a numeric literal")?
     };
 
     // let whole = caps.get(0).unwrap().as_str();
