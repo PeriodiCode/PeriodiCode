@@ -28,9 +28,13 @@ impl Interpreter {
     }
 
     fn execute_expression(&mut self, input: &str) {
+        println!(
+            "\x1b[1;32mPeriodiCode\x1b[00m:\x1b[1;34mDEC{:<2}\x1b[00m> {}",
+            self.radix_context, input
+        );
+
         if input.trim_start().starts_with('#') || input.trim().is_empty() {
             /* line-comment; ignore */
-            println!("PeriodiCode:DEC{:<2}$ {}", self.radix_context, input);
         } else if input.starts_with("@assert_eq($_, ") {
             let second_arg = input
                 .strip_prefix("@assert_eq($_, ")
@@ -53,8 +57,6 @@ impl Interpreter {
 
             let ratio = BigRational::new(numerator, denominator);
 
-            println!("PeriodiCode:DEC{:<2}$ {}", self.radix_context, input);
-
             if Some(&ratio) != self.previous_value.as_ref() {
                 match &self.previous_value {
                     None => panic!("ASSERTION FAILED: \nleft: (null)\nright: {}", ratio),
@@ -65,8 +67,8 @@ impl Interpreter {
                 }
             }
         } else {
-            println!("PeriodiCode:DEC{:<2}$ {}", self.radix_context, input);
-            let ans = parse_numeric_literal_with_radix_context(input, self.radix_context).unwrap();
+            let (ans, remaining) =
+                parse_numeric_literal_with_radix_context(input, self.radix_context).unwrap();
             print_rational_summary(&ans, self.radix_context);
             self.previous_value = Some(ans);
         }
@@ -117,7 +119,10 @@ fn strip_radix_prefix(input: &str) -> (&str, Option<u32>) {
     }
 }
 
-fn parse_numeric_literal_with_radix_context(input: &str, radix_context: u32) -> Result<BigRational, &'static str> {
+fn parse_numeric_literal_with_radix_context(
+    input: &str,
+    radix_context: u32,
+) -> Result<(BigRational, &str), &'static str> {
     let (input, literal_own_radix) = strip_radix_prefix(input);
     parse_numeric_literal_with_both_contexts(input, radix_context, literal_own_radix)
 }
@@ -126,7 +131,7 @@ fn parse_numeric_literal_with_both_contexts(
     input: &str,
     external_radix_context: u32,
     literal_own_radix: Option<u32>,
-) -> Result<BigRational, &'static str> {
+) -> Result<(BigRational, &str), &'static str> {
     /**
      * exponent:
      * `e` or `xp`: multiplies the number by the power of the literal's own radix. `e` can only be used if the base is less than fifteen
@@ -147,12 +152,16 @@ fn parse_numeric_literal_with_both_contexts(
     let literal_own_radix = literal_own_radix.unwrap_or(external_radix_context);
 
     let caps = if literal_own_radix < 15 {
-        RE_ALLOWING_E.captures(input).ok_or("No parse as a numeric literal")?
+        RE_ALLOWING_E
+            .captures(input)
+            .ok_or("No parse as a numeric literal")?
     } else {
-        RE_FORBIDDING_E.captures(input).ok_or("No parse as a numeric literal")?
+        RE_FORBIDDING_E
+            .captures(input)
+            .ok_or("No parse as a numeric literal")?
     };
 
-    // let whole = caps.get(0).unwrap().as_str();
+    let whole = caps.get(0).unwrap().as_str();
     let integral = caps.name("integral").unwrap().as_str();
     let (before_rep, repeating_digits) = match caps.name("dot") {
         Some(u) => {
@@ -225,7 +234,7 @@ fn parse_numeric_literal_with_both_contexts(
     };
 
     let ans = (integral_part + before_rep_part + repeating_digits_part) * exponent;
-    Ok(ans)
+    Ok((ans, input.strip_prefix(whole).unwrap()))
 }
 
 mod print;

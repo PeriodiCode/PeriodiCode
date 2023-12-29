@@ -1,8 +1,10 @@
-use num_rational::BigRational;
 use crate::parse_numeric_literal_with_radix_context;
+use num_rational::BigRational;
 
 fn parse_numeric_literal(input: &str) -> BigRational {
-    parse_numeric_literal_with_radix_context(input, 10).unwrap()
+    let (ans, remaining) = parse_numeric_literal_with_radix_context(input, 10).unwrap();
+    assert!(remaining.is_empty());
+    ans
 }
 
 #[test]
@@ -17,7 +19,10 @@ fn test() {
     assert_eq!(parse_numeric_literal(".1r6").to_string(), "1/6");
     assert_eq!(parse_numeric_literal(".r3").to_string(), "1/3");
     assert_eq!(
-        parse_numeric_literal_with_radix_context(".r0313452421", 6).unwrap().to_string(),
+        parse_numeric_literal_with_radix_context(".r0313452421", 6)
+            .unwrap()
+            .0
+            .to_string(),
         "1/11"
     );
 
@@ -49,7 +54,10 @@ fn test() {
     assert_eq!(parse_numeric_literal("0x11.p-10").to_string(), "17/1024");
     assert_eq!(parse_numeric_literal("0d11.p-10").to_string(), "11/1024");
     assert_eq!(
-        parse_numeric_literal_with_radix_context("0x1.p10", 6).unwrap().to_string(),
+        parse_numeric_literal_with_radix_context("0x1.p10", 6)
+            .unwrap()
+            .0
+            .to_string(),
         "64"
     );
 
@@ -58,7 +66,10 @@ fn test() {
     assert_eq!(parse_numeric_literal("0.1r6e1").to_string(), "5/3");
     assert_eq!(parse_numeric_literal("0.1r6xp1").to_string(), "5/3");
     assert_eq!(
-        parse_numeric_literal_with_radix_context("1.0p10", 10).unwrap().to_string(),
+        parse_numeric_literal_with_radix_context("1.0p10", 10)
+            .unwrap()
+            .0
+            .to_string(),
         "1024"
     );
 }
