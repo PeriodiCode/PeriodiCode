@@ -6,8 +6,13 @@ use num_traits::identities::One;
 use num_traits::pow::Pow;
 use num_traits::Num;
 use num_traits::Zero;
+use numerical_util::floor_as_bigint;
 use once_cell::sync::Lazy;
 use regex::Regex;
+
+use crate::numerical_util::power;
+
+mod numerical_util;
 
 fn main() {
     assert_eq!(parse_numeric_literal("0.1r6").to_string(), "1/6");
@@ -262,27 +267,6 @@ fn print_continued_fraction_radix(ans: &BigRational, external_radix_context: u32
     }
 }
 
-fn power(radix: u32, exponent: BigInt) -> BigRational {
-    match exponent.into_parts() {
-        (num_bigint::Sign::Minus, uint) => {
-            BigRational::new(BigInt::one(), BigInt::from(radix).pow(uint))
-        }
-        (num_bigint::Sign::NoSign, _) => BigRational::one(),
-        (num_bigint::Sign::Plus, uint) => {
-            BigRational::new(BigInt::from(radix).pow(uint), BigInt::one())
-        }
-    }
-}
-
-fn floor(s: &BigRational) -> BigInt {
-    if *s < Zero::zero() {
-        let one: BigInt = One::one();
-        (s.numer() - s.denom().clone() + one) / s.denom().clone()
-    } else {
-        s.numer().clone() / s.denom().clone()
-    }
-}
-
 enum FiniteContinuedFractionIter {
     Ratio(BigRational),
     Infinity,
@@ -300,7 +284,7 @@ impl Iterator for FiniteContinuedFractionIter {
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             FiniteContinuedFractionIter::Ratio(r) => {
-                let n = floor(r);
+                let n = floor_as_bigint(r);
                 let f = &*r - r.floor();
                 if f == BigRational::zero() {
                     *self = Self::Infinity;
