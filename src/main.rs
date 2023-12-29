@@ -104,7 +104,7 @@ fn parse_numeric_literal_with_radix_context(input: &str, radix_context: u32) -> 
     let (input, literal_own_radix) = strip_radix_prefix(input);
 
     println!(
-        "[radix_context: {:>2} in decimal] {}",
+        "PeriodiCode:DEC{:<2}$ {}",
         radix_context, original_input
     );
     parse_numeric_literal_with_both_contexts(input, radix_context, literal_own_radix)
@@ -210,6 +210,9 @@ fn parse_numeric_literal_with_both_contexts(
     let numer = ans.numer();
     let denom = ans.denom();
 
+    print!("frac: ");
+
+    /* print fractional */
     if denom == &BigInt::one() {
         print!("{}", numer.to_str_radix(external_radix_context));
     } else {
@@ -222,9 +225,41 @@ fn parse_numeric_literal_with_both_contexts(
     if external_radix_context != 10 {
         print!(" (DEC{})", ans);
     }
+
+    println!();
+
+    print!("cont: ");
+
+    print_continued_fraction_radix(&ans, external_radix_context);
+
+    if external_radix_context != 10 {
+        print!(" (DEC");
+        print_continued_fraction_radix(&ans, 10);
+        print!(")")
+    }
+
     println!("\n");
 
     ans
+}
+
+fn print_continued_fraction_radix(ans: &BigRational, external_radix_context: u32) {
+    let mut cont_frac_iter = FiniteContinuedFractionIter::new(ans);
+    let initial = cont_frac_iter.next().unwrap();
+    let remaining: Vec<BigInt> = cont_frac_iter.collect();
+    if remaining.is_empty() {
+        print!("[{}]", initial.to_str_radix(external_radix_context))
+    } else {
+        print!(
+            "[{}; {}]",
+            initial.to_str_radix(external_radix_context),
+            remaining
+                .into_iter()
+                .map(|n| n.to_str_radix(external_radix_context))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+    }
 }
 
 fn power(radix: u32, exponent: BigInt) -> BigRational {
@@ -235,6 +270,46 @@ fn power(radix: u32, exponent: BigInt) -> BigRational {
         (num_bigint::Sign::NoSign, _) => BigRational::one(),
         (num_bigint::Sign::Plus, uint) => {
             BigRational::new(BigInt::from(radix).pow(uint), BigInt::one())
+        }
+    }
+}
+
+fn floor(s: &BigRational) -> BigInt {
+    if *s < Zero::zero() {
+        let one: BigInt = One::one();
+        (s.numer() - s.denom().clone() + one) / s.denom().clone()
+    } else {
+        s.numer().clone() / s.denom().clone()
+    }
+}
+
+enum FiniteContinuedFractionIter {
+    Ratio(BigRational),
+    Infinity,
+}
+
+impl FiniteContinuedFractionIter {
+    fn new(s: &BigRational) -> Self {
+        Self::Ratio(s.clone())
+    }
+}
+
+impl Iterator for FiniteContinuedFractionIter {
+    type Item = BigInt;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            FiniteContinuedFractionIter::Ratio(r) => {
+                let n = floor(r);
+                let f = &*r - r.floor();
+                if f == BigRational::zero() {
+                    *self = Self::Infinity;
+                } else {
+                    *self = Self::Ratio(f.recip());
+                }
+                Some(n)
+            }
+            FiniteContinuedFractionIter::Infinity => None,
         }
     }
 }

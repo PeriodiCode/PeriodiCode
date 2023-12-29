@@ -101,43 +101,159 @@ fn main() {
 ↓
 
 ```
-[radix_context: 10 in decimal] 0.1r6 => 1/6
-[radix_context: 10 in decimal] 12. => 12
-[radix_context: 10 in decimal] 12 => 12
-[radix_context: 10 in decimal] 12.1 => 121/10
-[radix_context: 10 in decimal] 12.1r6 => 73/6
-[radix_context: 10 in decimal] .1r6 => 1/6
-[radix_context: 10 in decimal] .r3 => 1/3
-[radix_context: 10 in decimal] .r142857 => 1/7
-[radix_context:  6 in decimal] .r0313452421 => 1/11
-[radix_context: 10 in decimal] 0v100 => 400
-[radix_context: 10 in decimal] 0x100 => 256
-[radix_context: 10 in decimal] 0z100 => 144
-[radix_context: 10 in decimal] 0d100 => 100
-[radix_context: 10 in decimal] 0o100 => 64
-[radix_context: 10 in decimal] 0s100 => 36
-[radix_context: 10 in decimal] 0quin100 => 25
-[radix_context: 10 in decimal] 0quat100 => 16
-[radix_context: 10 in decimal] 0t100 => 9
-[radix_context: 10 in decimal] 0b100 => 4
-[radix_context: 10 in decimal] 0v100. => 400
-[radix_context: 10 in decimal] 0x100. => 256
-[radix_context: 10 in decimal] 0z100. => 144
-[radix_context: 10 in decimal] 0d100. => 100
-[radix_context: 10 in decimal] 0o100. => 64
-[radix_context: 10 in decimal] 0s100. => 36
-[radix_context: 10 in decimal] 0quin100. => 25
-[radix_context: 10 in decimal] 0quat100. => 16
-[radix_context: 10 in decimal] 0t100. => 9
-[radix_context: 10 in decimal] 0b100. => 4
-[radix_context: 10 in decimal] 0x1.p10 => 1024
-[radix_context: 10 in decimal] 0x1.p-10 => 1/1024
-[radix_context: 10 in decimal] 0b11.p-10 => 3/1024
-[radix_context: 10 in decimal] 0x11.p-10 => 17/1024
-[radix_context: 10 in decimal] 0d11.p-10 => 11/1024
-[radix_context:  6 in decimal] 0x1.p10 => 64
-[radix_context: 10 in decimal] 0s.r0313452421 => 1/11
-[radix_context: 10 in decimal] 0.1r6e1 => 5/3
-[radix_context: 10 in decimal] 0.1r6xp1 => 5/3
-[radix_context: 10 in decimal] 1.0p10 => 1024
+PeriodiCode:DEC10$ 0.1r6
+frac: 1/6
+cont: [0; 6]
+
+PeriodiCode:DEC10$ 12.
+frac: 12
+cont: [12]
+
+PeriodiCode:DEC10$ 12
+frac: 12
+cont: [12]
+
+PeriodiCode:DEC10$ 12.1
+frac: 121/10
+cont: [12; 10]
+
+PeriodiCode:DEC10$ 12.1r6
+frac: 73/6
+cont: [12; 6]
+
+PeriodiCode:DEC10$ .1r6
+frac: 1/6
+cont: [0; 6]
+
+PeriodiCode:DEC10$ .r3
+frac: 1/3
+cont: [0; 3]
+
+PeriodiCode:DEC10$ .r142857
+frac: 1/7
+cont: [0; 7]
+
+PeriodiCode:DEC6 $ .r0313452421
+frac: 1/15 (DEC1/11)
+cont: [0; 15] (DEC[0; 11])
+
+PeriodiCode:DEC10$ 0v100
+frac: 400
+cont: [400]
+
+PeriodiCode:DEC10$ 0x100
+frac: 256
+cont: [256]
+
+PeriodiCode:DEC10$ 0z100
+frac: 144
+cont: [144]
+
+PeriodiCode:DEC10$ 0d100
+frac: 100
+cont: [100]
+
+PeriodiCode:DEC10$ 0o100
+frac: 64
+cont: [64]
+
+PeriodiCode:DEC10$ 0s100
+frac: 36
+cont: [36]
+
+PeriodiCode:DEC10$ 0quin100
+frac: 25
+cont: [25]
+
+PeriodiCode:DEC10$ 0quat100
+frac: 16
+cont: [16]
+
+PeriodiCode:DEC10$ 0t100
+frac: 9
+cont: [9]
+
+PeriodiCode:DEC10$ 0b100
+frac: 4
+cont: [4]
+
+PeriodiCode:DEC10$ 0v100.
+frac: 400
+cont: [400]
+
+PeriodiCode:DEC10$ 0x100.
+frac: 256
+cont: [256]
+
+PeriodiCode:DEC10$ 0z100.
+frac: 144
+cont: [144]
+
+PeriodiCode:DEC10$ 0d100.
+frac: 100
+cont: [100]
+
+PeriodiCode:DEC10$ 0o100.
+frac: 64
+cont: [64]
+
+PeriodiCode:DEC10$ 0s100.
+frac: 36
+cont: [36]
+
+PeriodiCode:DEC10$ 0quin100.
+frac: 25
+cont: [25]
+
+PeriodiCode:DEC10$ 0quat100.
+frac: 16
+cont: [16]
+
+PeriodiCode:DEC10$ 0t100.
+frac: 9
+cont: [9]
+
+PeriodiCode:DEC10$ 0b100.
+frac: 4
+cont: [4]
+
+PeriodiCode:DEC10$ 0x1.p10
+frac: 1024
+cont: [1024]
+
+PeriodiCode:DEC10$ 0x1.p-10
+frac: 1/1024
+cont: [0; 1024]
+
+PeriodiCode:DEC10$ 0b11.p-10
+frac: 3/1024
+cont: [0; 341, 3]
+
+PeriodiCode:DEC10$ 0x11.p-10
+frac: 17/1024
+cont: [0; 60, 4, 4]
+
+PeriodiCode:DEC10$ 0d11.p-10
+frac: 11/1024
+cont: [0; 93, 11]
+
+PeriodiCode:DEC6 $ 0x1.p10
+frac: 144 (DEC64)
+cont: [144] (DEC[64])
+
+PeriodiCode:DEC10$ 0s.r0313452421
+frac: 1/11
+cont: [0; 11]
+
+PeriodiCode:DEC10$ 0.1r6e1
+frac: 5/3
+cont: [1; 1, 2]
+
+PeriodiCode:DEC10$ 0.1r6xp1
+frac: 5/3
+cont: [1; 1, 2]
+
+PeriodiCode:DEC10$ 1.0p10
+frac: 1024
+cont: [1024]
 ```
