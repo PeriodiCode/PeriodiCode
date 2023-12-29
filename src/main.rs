@@ -65,6 +65,7 @@ impl Interpreter {
                     ),
                 }
             }
+            println!("ok\n");
         } else {
             let ans = parse_numeric_literal_with_radix_context(input, self.radix_context);
             self.previous_value = Some(ans);
@@ -175,14 +176,14 @@ fn parse_numeric_literal_with_radix_context(input: &str, radix_context: u32) -> 
     let (input, literal_own_radix) = strip_radix_prefix(input);
 
     println!("PeriodiCode:DEC{:<2}$ {}", radix_context, original_input);
-    parse_numeric_literal_with_both_contexts(input, radix_context, literal_own_radix)
+    parse_numeric_literal_with_both_contexts(input, radix_context, literal_own_radix).unwrap()
 }
 
 fn parse_numeric_literal_with_both_contexts(
     input: &str,
     external_radix_context: u32,
     literal_own_radix: Option<u32>,
-) -> BigRational {
+) -> Result<BigRational, &'static str> {
     /**
      * exponent:
      * `e` or `xp`: multiplies the number by the power of the literal's own radix. `e` can only be used if the base is less than fifteen
@@ -211,10 +212,16 @@ fn parse_numeric_literal_with_both_contexts(
     // let whole = caps.get(0).unwrap().as_str();
     let integral = caps.name("integral").unwrap().as_str();
     let (before_rep, repeating_digits) = match caps.name("dot") {
-        Some(_) => (
-            caps.name("before_rep").unwrap().as_str(),
-            caps.name("rep_digits").unwrap().as_str(),
-        ),
+        Some(u) => {
+            if u.as_str() == "." && integral.is_empty() {
+                return Err("\"A single dot `.`, optionally followed by exponent\" is forbidden");
+            }
+
+            (
+                caps.name("before_rep").unwrap().as_str(),
+                caps.name("rep_digits").unwrap().as_str(),
+            )
+        }
         None => ("", ""),
     };
 
@@ -314,7 +321,7 @@ fn parse_numeric_literal_with_both_contexts(
 
     println!("\n");
 
-    ans
+    Ok(ans)
 }
 
 fn print_continued_fraction_radix(ans: &BigRational, external_radix_context: u32) {
