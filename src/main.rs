@@ -57,31 +57,35 @@ fn parse_dot_literal(input: &str) -> BigRational {
     parse_dot_literal_with_radix_context(input, 10)
 }
 
+fn strip_radix_prefix(input: &str) -> (&str, Option<u32>) {
+    if input.starts_with("0v") {
+        (input.strip_prefix("0v").unwrap(), Some(20))
+    } else if input.starts_with("0x") {
+        (input.strip_prefix("0x").unwrap(), Some(16))
+    } else if input.starts_with("0z") {
+        (input.strip_prefix("0z").unwrap(), Some(12))
+    } else if input.starts_with("0d") {
+        (input.strip_prefix("0d").unwrap(), Some(10))
+    } else if input.starts_with("0o") {
+        (input.strip_prefix("0o").unwrap(), Some(8))
+    } else if input.starts_with("0s") {
+        (input.strip_prefix("0s").unwrap(), Some(6))
+    } else if input.starts_with("0quin") {
+        (input.strip_prefix("0quin").unwrap(), Some(5))
+    } else if input.starts_with("0quat") {
+        (input.strip_prefix("0quat").unwrap(), Some(4))
+    } else if input.starts_with("0t") {
+        (input.strip_prefix("0t").unwrap(), Some(3))
+    } else if input.starts_with("0b") {
+        (input.strip_prefix("0b").unwrap(), Some(2))
+    } else {
+        (input, None)
+    }
+}
+
 fn parse_dot_literal_with_radix_context(input: &str, radix_context: u32) -> BigRational {
     let original_input = input;
-    let (input, literal_own_radix) = if input.starts_with("0v") {
-        (input.strip_prefix("0v").unwrap(), 20)
-    } else if input.starts_with("0x") {
-        (input.strip_prefix("0x").unwrap(), 16)
-    } else if input.starts_with("0z") {
-        (input.strip_prefix("0z").unwrap(), 12)
-    } else if input.starts_with("0d") {
-        (input.strip_prefix("0d").unwrap(), 10)
-    } else if input.starts_with("0o") {
-        (input.strip_prefix("0o").unwrap(), 8)
-    } else if input.starts_with("0s") {
-        (input.strip_prefix("0s").unwrap(), 6)
-    } else if input.starts_with("0quin") {
-        (input.strip_prefix("0quin").unwrap(), 5)
-    } else if input.starts_with("0quat") {
-        (input.strip_prefix("0quat").unwrap(), 4)
-    } else if input.starts_with("0t") {
-        (input.strip_prefix("0t").unwrap(), 3)
-    } else if input.starts_with("0b") {
-        (input.strip_prefix("0b").unwrap(), 2)
-    } else {
-        (input, radix_context)
-    };
+    let (input, literal_own_radix) = strip_radix_prefix(input);
 
     print!(
         "[radix_context: {:>2} in decimal] {} => ",
@@ -93,7 +97,7 @@ fn parse_dot_literal_with_radix_context(input: &str, radix_context: u32) -> BigR
 fn parse_dot_literal_with_both_contexts(
     input: &str,
     external_radix_context: u32,
-    literal_own_radix: u32,
+    literal_own_radix: Option<u32>,
 ) -> BigRational {
     /**
      * exponent:
@@ -111,6 +115,8 @@ fn parse_dot_literal_with_both_contexts(
     static RE_FORBIDDING_E: Lazy<Regex> = Lazy::new(|| {
         Regex::new(r"(?<integral>[0-9a-oA-O]*)\.(?<before_rep>[0-9a-oA-O]*)(?<rep_digits>(r[0-9a-oA-O]*)?)(?<exponent>((xp|p)[0-9a-oA-O]+)?)").unwrap()
     });
+
+    let literal_own_radix = literal_own_radix.unwrap_or(external_radix_context);
 
     let caps = if literal_own_radix < 15 {
         RE_ALLOWING_E.captures(input).unwrap()
