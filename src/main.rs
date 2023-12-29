@@ -103,8 +103,8 @@ fn parse_numeric_literal_with_radix_context(input: &str, radix_context: u32) -> 
     let original_input = input;
     let (input, literal_own_radix) = strip_radix_prefix(input);
 
-    print!(
-        "[radix_context: {:>2} in decimal] {} => ",
+    println!(
+        "[radix_context: {:>2} in decimal] {}",
         radix_context, original_input
     );
     parse_numeric_literal_with_both_contexts(input, radix_context, literal_own_radix)
@@ -207,7 +207,23 @@ fn parse_numeric_literal_with_both_contexts(
     };
 
     let ans = (integral_part + before_rep_part + repeating_digits_part) * exponent;
-    println!("{}", ans);
+    let numer = ans.numer();
+    let denom = ans.denom();
+
+    if denom == &BigInt::one() {
+        print!("{}", numer.to_str_radix(external_radix_context));
+    } else {
+        print!(
+            "{}/{}",
+            numer.to_str_radix(external_radix_context),
+            denom.to_str_radix(external_radix_context)
+        );
+    }
+    if external_radix_context != 10 {
+        print!(" (DEC{})", ans);
+    }
+    println!("\n");
+
     ans
 }
 
