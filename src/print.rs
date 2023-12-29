@@ -42,7 +42,7 @@ pub fn print_rational_summary(ans: &BigRational, external_radix_context: u32) {
 
     print_digit_expansion_radix(ans, external_radix_context);
 
-    println!("\n");
+    println!();
 }
 
 fn print_continued_fraction_radix(ans: &BigRational, external_radix_context: u32) {

@@ -64,9 +64,10 @@ impl Interpreter {
                     ),
                 }
             }
-            println!("ok\n");
         } else {
+            println!("PeriodiCode:DEC{:<2}$ {}", self.radix_context, input);
             let ans = parse_numeric_literal_with_radix_context(input, self.radix_context);
+            print_rational_summary(&ans, self.radix_context);
             self.previous_value = Some(ans);
         }
     }
@@ -89,8 +90,6 @@ mod test;
 fn bigint_from_possibly_empty_str_radix(str: &str, radix: u32) -> Result<BigInt, ParseBigIntError> {
     BigInt::from_str_radix(if str.is_empty() { "0" } else { str }, radix)
 }
-
-
 
 fn strip_radix_prefix(input: &str) -> (&str, Option<u32>) {
     if input.starts_with("0v") {
@@ -119,10 +118,7 @@ fn strip_radix_prefix(input: &str) -> (&str, Option<u32>) {
 }
 
 fn parse_numeric_literal_with_radix_context(input: &str, radix_context: u32) -> BigRational {
-    let original_input = input;
     let (input, literal_own_radix) = strip_radix_prefix(input);
-
-    println!("PeriodiCode:DEC{:<2}$ {}", radix_context, original_input);
     parse_numeric_literal_with_both_contexts(input, radix_context, literal_own_radix).unwrap()
 }
 
@@ -229,8 +225,6 @@ fn parse_numeric_literal_with_both_contexts(
     };
 
     let ans = (integral_part + before_rep_part + repeating_digits_part) * exponent;
-    print_rational_summary(&ans, external_radix_context);
-
     Ok(ans)
 }
 
