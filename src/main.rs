@@ -14,7 +14,72 @@ use crate::numerical_util::power;
 
 mod numerical_util;
 
+struct Interpreter {
+    previous_value: Option<BigRational>,
+    radix_context: u32,
+}
+
+impl Interpreter {
+    fn new() -> Self {
+        Self {
+            previous_value: None,
+            radix_context: 10,
+        }
+    }
+
+    fn execute_expression(&mut self, input: &str) {
+        if input.starts_with("@assert_eq($_, ") {
+            let second_arg = input
+                .strip_prefix("@assert_eq($_, ")
+                .unwrap()
+                .strip_suffix(')')
+                .unwrap();
+            static RE_MAYBE_FRACTION: Lazy<Regex> = Lazy::new(|| {
+                Regex::new(r"(?<numerator>[0-9a-oA-O]*)(?<denominator>(/[0-9a-oA-O]*)?)").unwrap()
+            });
+            let caps = RE_MAYBE_FRACTION.captures(second_arg).unwrap();
+            let numerator = BigInt::from_str_radix(
+                caps.name("numerator").unwrap().as_str(),
+                self.radix_context,
+            )
+            .unwrap();
+            let denominator = match caps.name("denominator") {
+                None => BigInt::one(),
+                Some(u) => BigInt::from_str_radix(
+                    u.as_str().strip_prefix('/').unwrap(),
+                    self.radix_context,
+                )
+                .unwrap(),
+            };
+
+            let ratio = BigRational::new(numerator, denominator);
+
+            println!("PeriodiCode:DEC{:<2}$ {}", self.radix_context, input);
+
+            if Some(&ratio) != self.previous_value.as_ref() {
+                match &self.previous_value {
+                    None => panic!("ASSERTION FAILED: \nleft: (null)\nright: {}", ratio),
+                    Some(previous_value) => panic!(
+                        "ASSERTION FAILED: \nleft: {}\nright: {}",
+                        previous_value, ratio
+                    ),
+                }
+            }
+        } else {
+            let ans = parse_numeric_literal_with_radix_context(input, self.radix_context);
+            self.previous_value = Some(ans);
+        }
+    }
+}
+
 fn main() {
+    let mut ctx = Interpreter::new();
+    ctx.execute_expression(".6r142857");
+    ctx.execute_expression("@assert_eq($_, 43/70)");
+}
+
+#[test]
+fn test() {
     assert_eq!(parse_numeric_literal(".6r142857").to_string(), "43/70");
     assert_eq!(parse_numeric_literal(".r142857").to_string(), "1/7");
     assert_eq!(parse_numeric_literal("0.1r6").to_string(), "1/6");
