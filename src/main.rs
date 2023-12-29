@@ -28,7 +28,9 @@ impl Interpreter {
     }
 
     fn execute_expression(&mut self, input: &str) {
-        if input.starts_with("@assert_eq($_, ") {
+        if input.trim_start().starts_with('#') || input.trim().is_empty() {
+            /* line-comment; ignore */
+        } else if input.starts_with("@assert_eq($_, ") {
             let second_arg = input
                 .strip_prefix("@assert_eq($_, ")
                 .unwrap()
@@ -43,13 +45,9 @@ impl Interpreter {
                 self.radix_context,
             )
             .unwrap();
-            let denominator = match caps.name("denominator") {
+            let denominator = match caps.name("denominator").unwrap().as_str().strip_prefix('/') {
                 None => BigInt::one(),
-                Some(u) => BigInt::from_str_radix(
-                    u.as_str().strip_prefix('/').unwrap(),
-                    self.radix_context,
-                )
-                .unwrap(),
+                Some(u) => BigInt::from_str_radix(u, self.radix_context).unwrap(),
             };
 
             let ratio = BigRational::new(numerator, denominator);
@@ -71,12 +69,17 @@ impl Interpreter {
             self.previous_value = Some(ans);
         }
     }
+
+    fn execute_lines(&mut self, input: &str) {
+        for line in input.lines() {
+            self.execute_expression(line);
+        }
+    }
 }
 
 fn main() {
     let mut ctx = Interpreter::new();
-    ctx.execute_expression(".6r142857");
-    ctx.execute_expression("@assert_eq($_, 43/70)");
+    ctx.execute_lines(include_str!("../example.periodicode"));
 }
 
 #[test]
