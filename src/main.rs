@@ -229,6 +229,12 @@ fn parse_numeric_literal_with_both_contexts(
     };
 
     let ans = (integral_part + before_rep_part + repeating_digits_part) * exponent;
+    print_rational_summary(&ans, external_radix_context);
+
+    Ok(ans)
+}
+
+fn print_rational_summary(ans: &BigRational, external_radix_context: u32) {
     let numer = ans.numer();
     let denom = ans.denom();
 
@@ -252,11 +258,11 @@ fn parse_numeric_literal_with_both_contexts(
 
     print!("cont: ");
 
-    print_continued_fraction_radix(&ans, external_radix_context);
+    print_continued_fraction_radix(ans, external_radix_context);
 
     if external_radix_context != 10 {
         print!(" (DEC");
-        print_continued_fraction_radix(&ans, 10);
+        print_continued_fraction_radix(ans, 10);
         print!(")")
     }
 
@@ -264,11 +270,9 @@ fn parse_numeric_literal_with_both_contexts(
 
     print!("digt: ");
 
-    print_digit_expansion_radix(&ans, external_radix_context);
+    print_digit_expansion_radix(ans, external_radix_context);
 
     println!("\n");
-
-    Ok(ans)
 }
 
 fn print_continued_fraction_radix(ans: &BigRational, external_radix_context: u32) {
