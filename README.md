@@ -26,6 +26,19 @@ You can choose what base/radix you use to represent numbers
   - `0t`: trinary (base 3)
   - `0b`: binary (base 2)
 
+### Scaling by the exponent
+
+Intentionally designed so that C++-style `1e10`, `12e-5`, `0x1ffp10` are incorporated.
+
+- `e` or `xp`: multiplies the number by the power of the literal's own radix. 
+  - `e` can only be used if the base is less than fifteen
+ 
+- `p`: multiplies the number by powers of two.
+
+The digits following `e`, `xp` or `p` is interpreted with the power of radix (taken from the external context).
+
+Hence, in decimal context, 0x1.0p10 == 1024 and 0x11p-10 == 17/1024
+
 ## Current progress
 
 ```rs
