@@ -24,6 +24,7 @@ impl Parser {
         &mut self,
         input: &'a str,
     ) -> Result<(Value, &'a str), &'static str> {
+        let input = input.trim_start();
         if let Some(stripped) = input.strip_prefix('(') {
             let (value, input) = self.parse_expression(stripped)?;
             if let Some(stripped) = input.strip_prefix(')') {
@@ -44,6 +45,31 @@ impl Parser {
         &mut self,
         input: &'a str,
     ) -> Result<(Value, &'a str), &'static str> {
-        self.parse_primary_expression(input)
+        let input = input.trim_start();
+        self.parse_multiplicative_expression(input)
+    }
+
+    pub fn parse_multiplicative_expression<'a>(
+        &mut self,
+        input: &'a str,
+    ) -> Result<(Value, &'a str), &'static str> {
+        let input = input.trim_start();
+        let (mut val, remaining) = self.parse_primary_expression(input)?;
+        let mut input = remaining;
+        loop {
+            if let Some(stripped) = input.trim_start().strip_prefix('*') {
+                let (val2, input2) = self.parse_primary_expression(stripped)?;
+                val *= val2;
+                input = input2;
+            } else if let Some(stripped) = input.trim_start().strip_prefix('/') {
+                let (val2, input2) = self.parse_primary_expression(stripped)?;
+                val /= val2;
+                input = input2;
+            } else {
+                break;
+            }
+        }
+
+        Ok((val, input))
     }
 }
