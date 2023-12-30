@@ -30,94 +30,94 @@ impl Parser {
 
     pub fn parse_expression<'a>(
         &mut self,
-        input: &'a str,
+        buf: &'a str,
     ) -> Result<(Value, &'a str), &'static str> {
-        let input = input.trim_start();
-        self.parse_additive_expression(input)
+        let buf = buf.trim_start();
+        self.parse_additive_expression(buf)
     }
 
     fn parse_additive_expression<'a>(
         &mut self,
-        input: &'a str,
+        buf: &'a str,
     ) -> Result<(Value, &'a str), &'static str> {
-        let input = input.trim_start();
-        let (mut val, remaining) = self.parse_multiplicative_expression(input)?;
-        let mut input = remaining;
+        let buf = buf.trim_start();
+        let (mut val, buf) = self.parse_multiplicative_expression(buf)?;
+        let mut buf = buf;
         loop {
-            if let Some(stripped) = input.trim_start().strip_prefix('+') {
-                let (val2, input2) = self.parse_multiplicative_expression(stripped)?;
+            if let Some(stripped) = buf.trim_start().strip_prefix('+') {
+                let (val2, buf2) = self.parse_multiplicative_expression(stripped)?;
                 val += val2;
-                input = input2;
-            } else if let Some(stripped) = input.trim_start().strip_prefix('-') {
-                let (val2, input2) = self.parse_multiplicative_expression(stripped)?;
+                buf = buf2;
+            } else if let Some(stripped) = buf.trim_start().strip_prefix('-') {
+                let (val2, buf2) = self.parse_multiplicative_expression(stripped)?;
                 val -= val2;
-                input = input2;
+                buf = buf2;
             } else {
                 break;
             }
         }
 
-        Ok((val, input))
+        Ok((val, buf))
     }
 
     fn parse_multiplicative_expression<'a>(
         &mut self,
-        input: &'a str,
+        buf: &'a str,
     ) -> Result<(Value, &'a str), &'static str> {
-        let input = input.trim_start();
-        let (mut val, remaining) = self.parse_unary_expression(input)?;
-        let mut input = remaining;
+        let buf = buf.trim_start();
+        let (mut val, buf) = self.parse_unary_expression(buf)?;
+        let mut buf = buf;
         loop {
-            if let Some(stripped) = input.trim_start().strip_prefix('*') {
-                let (val2, input2) = self.parse_unary_expression(stripped)?;
+            if let Some(stripped) = buf.trim_start().strip_prefix('*') {
+                let (val2, buf2) = self.parse_unary_expression(stripped)?;
                 val *= val2;
-                input = input2;
-            } else if let Some(stripped) = input.trim_start().strip_prefix('/') {
-                let (val2, input2) = self.parse_unary_expression(stripped)?;
+                buf = buf2;
+            } else if let Some(stripped) = buf.trim_start().strip_prefix('/') {
+                let (val2, buf2) = self.parse_unary_expression(stripped)?;
                 val /= val2;
-                input = input2;
+                buf = buf2;
             } else {
                 break;
             }
         }
 
-        Ok((val, input))
+        Ok((val, buf))
     }
 
     fn parse_unary_expression<'a>(
         &mut self,
-        input: &'a str,
+        buf: &'a str,
     ) -> Result<(Value, &'a str), &'static str> {
-        let input = input.trim_start();
-        if let Some(stripped) = input.strip_prefix('+') {
-            let (value, input) = self.parse_unary_expression(stripped)?;
-            Ok((value, input))
-        } else if let Some(stripped) = input.strip_prefix('-') {
-            let (value, input) = self.parse_unary_expression(stripped)?;
-            Ok((-value, input))
+        let buf = buf.trim_start();
+        if let Some(stripped) = buf.strip_prefix('+') {
+            let (value, buf) = self.parse_unary_expression(stripped)?;
+            Ok((value, buf))
+        } else if let Some(stripped) = buf.strip_prefix('-') {
+            let (value, buf) = self.parse_unary_expression(stripped)?;
+            Ok((-value, buf))
         } else {
-            self.parse_primary_expression(input)
+            self.parse_primary_expression(buf)
         }
     }
 
     fn parse_primary_expression<'a>(
         &mut self,
-        input: &'a str,
+        buf: &'a str,
     ) -> Result<(Value, &'a str), &'static str> {
-        let input = input.trim_start();
-        if let Some(stripped) = input.strip_prefix("$_") {
+        let buf = buf.trim_start();
+        if let Some(stripped) = buf.strip_prefix("$_") {
             Ok((self.previous_value.clone().unwrap(), stripped))
-        } else if let Some(stripped) = input.strip_prefix('(') {
-            let (value, input) = self.parse_expression(stripped)?;
-            let input = input.trim_start();
-            if let Some(stripped) = input.strip_prefix(')') {
+        } else if let Some(stripped) = buf.strip_prefix('(') {
+            let (value, buf) = self.parse_expression(stripped)?;
+            let buf = buf.trim_start();
+            if let Some(stripped) = buf.strip_prefix(')') {
                 Ok((value, stripped))
             } else {
                 Err("Mismatched parenthesis")
             }
         } else {
             let (value, remaining) = numeric_literal::parse_numeric_literal_with_radix_context(
-                input,
+                buf,
                 self.radix_context,
             )?;
             Ok((value, remaining))
