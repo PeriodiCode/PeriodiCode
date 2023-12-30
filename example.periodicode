@@ -1,178 +1,138 @@
-# repeated decimals
-.6r142857
-@assert_eq($_, 43/70)
+#######################################################
+# Chapter 1. Literals 
+# PeriodiCode offers a wide variety of numeric literals
+#######################################################
 
-.r142857
+#-------------------------------
+# 1-1. Repeating Decimal
+#-------------------------------
+
+# To denote a repeating decimal of the form 
+# 0.142857142857142857142857142857...,
+# you write an `r` right before the repetition begins. 
+0.r142857
+
+# You use $_ to denote the result of the previous computation
+$_
+
+# And to check that a value equals another value, you write it as follows.
 @assert_eq($_, 1/7)
 
-0.1r6
-@assert_eq($_, 1/6)
+# When the decimal representation has a non-repeating part,
+# 0.6142857142857142857142857
+#    |rep  |rep  |rep  |rep  |
+# the principle stays the same: 
+# you write an `r` right before the repetition begins.
+@assert_eq(0.6r142857, 43/70)
 
-12.
-@assert_eq($_, 12)
+# Hence, this is how you denote 0.166666...
+@assert_eq(0.1r6, 1/6)
 
-12
-@assert_eq($_, 12)
+# Of course, a terminating decimal is written as-is
+@assert_eq(12.1, 121/10)
 
-12.1
-@assert_eq($_, 121/10)
+# you can write a whole number with or without a dot
+@assert_eq(12., 12)
 
-12.1r6
-@assert_eq($_, 73/6)
+# and r works just the same
+@assert_eq(12.1r6, 73/6)
 
-.1r6
-@assert_eq($_, 1/6)
+# you can also omit the leading zeros before the decimal point
+@assert_eq(.1r6, 1/6)
+@assert_eq(.r3, 1/3)
 
-.r3
-@assert_eq($_, 1/3)
-
-##################################################
-# you can use a wide variety of prefix
-# to specify the base of a particular literal
-##################################################
+#---------------------------------------------------
+# 1-2. Choosing the base/radix
+# You can use a wide variety of prefix
+# to specify the base/radix of a particular literal.
+# You might already know `0x`, `0o` and `0b`;
+# PeriodiCode offers much more
+#---------------------------------------------------
 
 # vigesimal
-0v100
-@assert_eq($_, 400)
+@assert_eq(0v100, 400)
 
 # hexadecimal
-0x100
-@assert_eq($_, 256)
+@assert_eq(0x100, 256)
 
 # dozenal
-0z100
-@assert_eq($_, 144)
+@assert_eq(0z100, 144)
 
 # decimal
-0d100
-@assert_eq($_, 100)
+@assert_eq(0d100, 100)
 
 # octal
-0o100
-@assert_eq($_, 64)
+@assert_eq(0o100, 64)
 
 # senary
-0s100
-@assert_eq($_, 36)
+@assert_eq(0s100, 36)
 
 # quinary
-0qn100
-@assert_eq($_, 25)
+@assert_eq(0qn100, 25)
 
 # quaternary
-0qt100
-@assert_eq($_, 16)
+@assert_eq(0qt100, 16)
 
 # ternary
-0t100
-@assert_eq($_, 9)
+@assert_eq(0t100, 9)
 
 # binary
-0b100
-@assert_eq($_, 4)
+@assert_eq(0b100, 4)
 
-##################################################
-# you can write the same thing with an extra dot 
+# You can write the same thing with an extra dot 
 # and it makes no difference
-##################################################
-0v100.
-@assert_eq($_, 400)
+@assert_eq(0x100., 256)
+@assert_eq(0d100., 100)
+@assert_eq(0b100., 4)
 
-0x100.
-@assert_eq($_, 256)
-
-0z100.
-@assert_eq($_, 144)
-
-0d100.
-@assert_eq($_, 100)
-
-0o100.
-@assert_eq($_, 64)
-
-0s100.
-@assert_eq($_, 36)
-
-0qn100.
-@assert_eq($_, 25)
-
-0qt100.
-@assert_eq($_, 16)
-
-0t100.
-@assert_eq($_, 9)
-
-0b100.
-@assert_eq($_, 4)
-
-
-# of course, you can use the prefix to denote repeated decimals
+# And you can also use the prefix to denote repeated decimals
 0s.r0313452421
 @assert_eq($_, 1/11)
 
+#---------------------------------------------------
+# 1-3. Exponentiation
+# Incorporates the C++-style 1e10 and 0x1ffp-10
+#---------------------------------------------------
 
 # `p` inside a literal denotes multiplying the whole literal by powers of two
 # This is necessary to make it compatible with C++-style float literal
-0x1.p10
-@assert_eq($_, 1024)
+@assert_eq(0x1.p10, 1024)
+@assert_eq(0x1.p+10, 1024)
+@assert_eq(0x1.p-10, 1/1024)
+@assert_eq(0b11.p-10, 3/1024)
+@assert_eq(0x11.p-10, 17/1024)
+@assert_eq(0d11.p-10, 11/1024)
 
-0x1.p-10
-@assert_eq($_, 1/1024)
-
-0b11.p-10
-@assert_eq($_, 3/1024)
-
-0x11.p-10
-@assert_eq($_, 17/1024)
-
-0d11.p-10
-@assert_eq($_, 11/1024)
-
-
-# you can also use the `e` notation to multiply the literal by the power of its radix,
+# You can also use the `e` notation to multiply the literal by the power of its radix,
 # but since you need `e` as a digit in hexadecimal, an equivalent alternative `xp` can be used as a fallback
-0.1r6e1
-@assert_eq($_, 5/3)
-
-0.1r6xp1
-@assert_eq($_, 5/3)
-
-0x1e2
-@assert_eq($_, 482)
-
-0x1xp2
-@assert_eq($_, 256)
+@assert_eq(0.1r6e1, 5/3)
+@assert_eq(0.1r6xp1, 5/3)
+@assert_eq(0x1e2, 482)
+@assert_eq(0x1xp2, 256)
 
 ##################################################
-# arithmetic expression
+# Chapter 2. Arithmetic Expression
+# Of course you want to do math
 ##################################################
-(12)
-@assert_eq($_, 12)
 
-((12))
-@assert_eq($_, 12)
+# Basic math
+@assert_eq((12), 12)
+@assert_eq(((12)), 12)
+@assert_eq(3*4, 12)
+@assert_eq(6/8, 3/4)
+@assert_eq(3/5 + 1/4 - 1/0x32, 83/100)
 
-3*4
-@assert_eq($_, 12)
+# You can insert spaces between the tokens
+@ assert_eq  (  3 *  4   , 12  )
+   @assert_eq(   6  /   8  , 3/4)
 
-  3 *  4   
-@assert_eq($_, 12)
+# unary minus
+@assert_eq( -  6  / -  8 , 3/4)
 
-6/8
-@assert_eq($_, 3/4)
+# unary plus
+@assert_eq( ( -  6  /  8 ) * ( + 1 / - 1 ) , 3/4)
 
-   6  /   8
-@assert_eq($_, 3/4)
-
- -  6  / -  8
-@assert_eq($_, 3/4)
-
- ( -  6  /  8 ) * ( + 1 / - 1 )
-@assert_eq($_, 3/4)
-
-3/5 + 1/4 - 1/0x32
-@assert_eq($_, 83/100)
-
+# Note that you use $_ to denote the result of the previous computation
 3
 $_
 $_ + 2
