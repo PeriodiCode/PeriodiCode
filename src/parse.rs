@@ -25,7 +25,31 @@ impl Parser {
         input: &'a str,
     ) -> Result<(Value, &'a str), &'static str> {
         let input = input.trim_start();
-        self.parse_multiplicative_expression(input)
+        self.parse_additive_expression(input)
+    }
+
+    fn parse_additive_expression<'a>(
+        &mut self,
+        input: &'a str,
+    ) -> Result<(Value, &'a str), &'static str> {
+        let input = input.trim_start();
+        let (mut val, remaining) = self.parse_multiplicative_expression(input)?;
+        let mut input = remaining;
+        loop {
+            if let Some(stripped) = input.trim_start().strip_prefix('+') {
+                let (val2, input2) = self.parse_multiplicative_expression(stripped)?;
+                val += val2;
+                input = input2;
+            } else if let Some(stripped) = input.trim_start().strip_prefix('-') {
+                let (val2, input2) = self.parse_multiplicative_expression(stripped)?;
+                val -= val2;
+                input = input2;
+            } else {
+                break;
+            }
+        }
+
+        Ok((val, input))
     }
 
     fn parse_multiplicative_expression<'a>(
