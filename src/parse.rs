@@ -24,14 +24,13 @@ impl Parser {
         &mut self,
         input: &'a str,
     ) -> Result<(Value, &'a str), &'static str> {
-        if input.starts_with('(') {
-            let input = &input[1..];
-            let (value, input) = self.parse_expression(input)?;
-            if !input.starts_with(')') {
-                return Err("Mismatched parenthesis");
+        if let Some(stripped) = input.strip_prefix('(') {
+            let (value, input) = self.parse_expression(stripped)?;
+            if let Some(stripped) = input.strip_prefix(')') {
+                Ok((value, stripped))
+            } else {
+                Err("Mismatched parenthesis")
             }
-            let input = &input[1..];
-            Ok((value, input))
         } else {
             let (value, remaining) = numeric_literal::parse_numeric_literal_with_radix_context(
                 input,
