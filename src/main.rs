@@ -1,10 +1,5 @@
-use num_bigint::BigInt;
 use num_rational::BigRational;
-use num_traits::identities::One;
-use num_traits::Num;
-use once_cell::sync::Lazy;
 use parse::Parser;
-use regex::Regex;
 
 use crate::print::print_rational_summary;
 
@@ -31,37 +26,6 @@ impl Interpreter {
 
         if input.trim_start().starts_with('#') || input.trim().is_empty() {
             /* line-comment; ignore */
-        } else if input.starts_with("@assert_eq($_, ") {
-            let second_arg = input
-                .strip_prefix("@assert_eq($_, ")
-                .unwrap()
-                .strip_suffix(')')
-                .unwrap();
-            static RE_MAYBE_FRACTION: Lazy<Regex> = Lazy::new(|| {
-                Regex::new(r"(?<numerator>[0-9a-oA-O]*)(?<denominator>(/[0-9a-oA-O]*)?)").unwrap()
-            });
-            let caps = RE_MAYBE_FRACTION.captures(second_arg).unwrap();
-            let numerator = BigInt::from_str_radix(
-                caps.name("numerator").unwrap().as_str(),
-                self.radix_context,
-            )
-            .unwrap();
-            let denominator = match caps.name("denominator").unwrap().as_str().strip_prefix('/') {
-                None => BigInt::one(),
-                Some(u) => BigInt::from_str_radix(u, self.radix_context).unwrap(),
-            };
-
-            let ratio = BigRational::new(numerator, denominator);
-
-            if Some(&ratio) != self.previous_value.as_ref() {
-                match &self.previous_value {
-                    None => panic!("ASSERTION FAILED: \nleft: (null)\nright: {}", ratio),
-                    Some(previous_value) => panic!(
-                        "ASSERTION FAILED: \nleft: {}\nright: {}",
-                        previous_value, ratio
-                    ),
-                }
-            }
         } else {
             parser.set_radix_context(self.radix_context);
             parser.set_previous_value(self.previous_value.clone());
