@@ -3,9 +3,9 @@ use num_rational::BigRational;
 use num_traits::identities::One;
 use num_traits::Num;
 use once_cell::sync::Lazy;
+use parse::Parser;
 use regex::Regex;
 
-use crate::parse::parse_numeric_literal_with_radix_context;
 use crate::print::print_rational_summary;
 
 mod numerical_util;
@@ -23,7 +23,7 @@ impl Interpreter {
         }
     }
 
-    fn execute_expression(&mut self, input: &str) {
+    fn execute_expression(&mut self, parser: &mut Parser, input: &str) {
         println!(
             "\x1b[1;34mPeriodiCode\x1b[00m:\x1b[1;32mDEC{:<2}\x1b[00m> {}",
             self.radix_context, input
@@ -63,23 +63,24 @@ impl Interpreter {
                 }
             }
         } else {
-            let (ans, remaining) =
-                parse_numeric_literal_with_radix_context(input, self.radix_context).unwrap();
+            parser.set_radix_context(self.radix_context);
+            let (ans, remaining) = parser.parse_expression(input).unwrap();
             print_rational_summary(&ans, self.radix_context);
             self.previous_value = Some(ans);
         }
     }
 
-    fn execute_lines(&mut self, input: &str) {
+    fn execute_lines(&mut self, parser: &mut Parser, input: &str) {
         for line in input.lines() {
-            self.execute_expression(line);
+            self.execute_expression(parser, line);
         }
     }
 }
 
 fn main() {
+    let mut parser = Parser::new();
     let mut ctx = Interpreter::new();
-    ctx.execute_lines(include_str!("../example.periodicode"));
+    ctx.execute_lines(&mut parser, include_str!("../example.periodicode"));
 }
 
 #[cfg(test)]
