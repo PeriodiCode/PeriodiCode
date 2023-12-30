@@ -6,11 +6,15 @@ type Value = BigRational;
 
 pub struct Parser {
     radix_context: u32,
+    previous_value: Option<Value>,
 }
 
 impl Parser {
     pub fn new() -> Self {
-        Self { radix_context: 10 }
+        Self {
+            radix_context: 10,
+            previous_value: None,
+        }
     }
 
     pub fn set_radix_context(&mut self, new: u32) {
@@ -18,6 +22,10 @@ impl Parser {
             panic!("radix greater than 25 is not supported")
         }
         self.radix_context = new;
+    }
+
+    pub fn set_previous_value(&mut self, previous_value: Option<Value>) {
+        self.previous_value = previous_value;
     }
 
     pub fn parse_expression<'a>(
@@ -97,7 +105,9 @@ impl Parser {
         input: &'a str,
     ) -> Result<(Value, &'a str), &'static str> {
         let input = input.trim_start();
-        if let Some(stripped) = input.strip_prefix('(') {
+        if let Some(stripped) = input.strip_prefix("$_") {
+            Ok((self.previous_value.clone().unwrap(), stripped))
+        } else if let Some(stripped) = input.strip_prefix('(') {
             let (value, input) = self.parse_expression(stripped)?;
             let input = input.trim_start();
             if let Some(stripped) = input.strip_prefix(')') {

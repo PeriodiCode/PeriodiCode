@@ -64,6 +64,7 @@ impl Interpreter {
             }
         } else {
             parser.set_radix_context(self.radix_context);
+            parser.set_previous_value(self.previous_value.clone());
             let (ans, remaining) = parser.parse_expression(input).unwrap();
             print_rational_summary(&ans, self.radix_context);
             self.previous_value = Some(ans);
