@@ -4,7 +4,7 @@ use num_rational::BigRational;
 use num_traits::identities::One;
 use num_traits::Zero;
 
-pub fn print_rational_summary(ans: &BigRational, external_radix_context: u32) {
+pub fn rational_print_summary(ans: &BigRational, external_radix_context: u32) {
     let numer = ans.numer();
     let denom = ans.denom();
 
@@ -21,7 +21,7 @@ pub fn print_rational_summary(ans: &BigRational, external_radix_context: u32) {
         );
     }
     if external_radix_context != 10 {
-        print!(" (DEC{})", ans);
+        print!(" (DEC{ans})");
     }
 
     println!();
@@ -33,7 +33,7 @@ pub fn print_rational_summary(ans: &BigRational, external_radix_context: u32) {
     if external_radix_context != 10 {
         print!(" (DEC");
         print_continued_fraction_radix(ans, 10);
-        print!(")")
+        print!(")");
     }
 
     println!();
@@ -50,7 +50,7 @@ fn print_continued_fraction_radix(ans: &BigRational, external_radix_context: u32
     let initial = cont_frac_iter.next().unwrap();
     let remaining: Vec<BigInt> = cont_frac_iter.collect();
     if remaining.is_empty() {
-        print!("[{}]", initial.to_str_radix(external_radix_context))
+        print!("[{}]", initial.to_str_radix(external_radix_context));
     } else {
         print!(
             "[{}; {}]",

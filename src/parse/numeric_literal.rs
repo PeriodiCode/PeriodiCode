@@ -101,13 +101,10 @@ fn parse_numeric_literal_with_both_contexts(
 
     let exponent = caps.name("exponent").unwrap().as_str();
 
-    // println!("whole: {:?}", whole);
-
     let integral_part: BigRational = BigRational::new(
         bigint_from_possibly_empty_str_radix(integral, literal_own_radix).unwrap(),
         BigInt::one(),
     );
-    // println!("integral_part: {:?}", integral_part);
 
     let scaling = BigInt::from(literal_own_radix).pow(BigUint::from(before_rep.len()));
 
@@ -115,7 +112,6 @@ fn parse_numeric_literal_with_both_contexts(
         bigint_from_possibly_empty_str_radix(before_rep, literal_own_radix).unwrap(),
         scaling.clone(),
     );
-    // println!("before_rep_part: {:?}", before_rep_part);
 
     let repeating_digits_part: BigRational = if repeating_digits.starts_with('r') {
         BigRational::new(
@@ -131,7 +127,6 @@ fn parse_numeric_literal_with_both_contexts(
     } else {
         BigRational::zero()
     };
-    // println!("repeating_digits_part: {:?}", repeating_digits_part);
 
     /* what follows the `e`, `p` or `xp` is interpreted using the external context */
     let exponent: BigRational = if exponent.starts_with('e') {

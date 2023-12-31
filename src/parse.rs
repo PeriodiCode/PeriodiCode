@@ -31,9 +31,7 @@ impl<'b> Parser<'b> {
     }
 
     pub fn set_radix_context(&mut self, new: u32) {
-        if new > 25 {
-            panic!("radix greater than 25 is not supported")
-        }
+        assert!(new <= 25, "radix greater than 25 is not supported");
         self.radix_context = new;
     }
 
@@ -111,7 +109,7 @@ impl<'b> Parser<'b> {
     }
 
     fn trim_start(&mut self) {
-        self.buf = self.buf.trim_start()
+        self.buf = self.buf.trim_start();
     }
 
     fn parse_funccall_expression(&mut self) -> Result<Value, &'static str> {
@@ -139,10 +137,7 @@ impl<'b> Parser<'b> {
                 if first_arg == second_arg {
                     Ok(first_arg) // @assert_eq(7*6, 42) returns 42
                 } else {
-                    panic!(
-                        "ASSERTION FAILED: \nleft: {}\nright: {}",
-                        first_arg, second_arg
-                    )
+                    panic!("ASSERTION FAILED: \nleft: {first_arg}\nright: {second_arg}",)
                 }
             } else {
                 panic!("UNSUPPORTED FUNCTION: `@{}`", ident.0)

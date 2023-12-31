@@ -1,7 +1,9 @@
+#![warn(clippy::pedantic)]
+
 use num_rational::BigRational;
 use parse::Parser;
 
-use crate::print::print_rational_summary;
+use crate::print::rational_print_summary;
 
 mod numerical_util;
 
@@ -33,9 +35,8 @@ impl Interpreter {
             if remaining.is_empty() || remaining.starts_with('#') {
                 // The line ends with a semicolon; don't print anything
                 return;
-            } else {
-                input = remaining.to_owned();
             }
+            input = remaining.to_owned();
         }
 
         let mut ans;
@@ -52,18 +53,17 @@ impl Interpreter {
             self.previous_value = Some(ans);
 
             if remaining.is_empty() || remaining.starts_with('#') {
-                print_rational_summary(self.previous_value.as_ref().unwrap(), self.radix_context);
+                rational_print_summary(self.previous_value.as_ref().unwrap(), self.radix_context);
                 return;
             } else if remaining.starts_with(';') {
                 let remaining = remaining.strip_prefix(';').unwrap().trim_start();
                 if remaining.is_empty() || remaining.starts_with('#') {
                     // The line ends with a semicolon; don't print anything
                     return;
-                } else {
-                    input = remaining.to_owned();
                 }
+                input = remaining.to_owned();
             } else {
-                panic!("cannot parse the remaining `{}`", remaining);
+                panic!("cannot parse the remaining `{remaining}`");
             }
         }
     }
