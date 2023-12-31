@@ -25,37 +25,46 @@ impl Interpreter {
             self.radix_context, input
         );
 
-        if input.trim_start().starts_with('#') || input.trim().is_empty() {
+        if input.trim_start().starts_with('#') || input.trim_start().is_empty() {
             /* line-comment; ignore */
-        } else {
-            let mut ans;
-            loop {
-                let mut parser = Parser::new(&input);
-                parser.set_radix_context(self.radix_context);
-                parser.set_previous_value(self.previous_value.clone());
-
-                ans = parser.parse_expression().unwrap();
-                self.radix_context = parser.get_radix_context();
-                let remaining = parser.get_buf().trim_start();
-
-                if remaining.is_empty() || remaining.starts_with('#') {
-                    break;
-                } else if remaining.starts_with(';') {
-                    // Set the result of the final expression to `$_`
-                    self.previous_value = Some(ans);
-                    let remaining = remaining.strip_prefix(';').unwrap().trim_start();
-                    if remaining.is_empty() || remaining.starts_with('#') {
-                        // The line ends with a semicolon; don't print anything
-                        return;
-                    } else {
-                        input = remaining.to_owned();
-                    }
-                } else {
-                    panic!("cannot parse the remaining `{}`", remaining);
-                }
+            return;
+        } else if input.trim_start().starts_with(';') {
+            let remaining = input.trim_start().strip_prefix(';').unwrap().trim_start();
+            if remaining.is_empty() || remaining.starts_with('#') {
+                // The line ends with a semicolon; don't print anything
+                return;
+            } else {
+                input = remaining.to_owned();
             }
-            print_rational_summary(&ans, self.radix_context);
+        }
+
+        let mut ans;
+        loop {
+            let mut parser = Parser::new(&input);
+            parser.set_radix_context(self.radix_context);
+            parser.set_previous_value(self.previous_value.clone());
+
+            ans = parser.parse_expression().unwrap();
+            self.radix_context = parser.get_radix_context();
+            let remaining = parser.get_buf().trim_start();
+
+            // Set the result of the final expression to `$_`
             self.previous_value = Some(ans);
+
+            if remaining.is_empty() || remaining.starts_with('#') {
+                print_rational_summary(self.previous_value.as_ref().unwrap(), self.radix_context);
+                return;
+            } else if remaining.starts_with(';') {
+                let remaining = remaining.strip_prefix(';').unwrap().trim_start();
+                if remaining.is_empty() || remaining.starts_with('#') {
+                    // The line ends with a semicolon; don't print anything
+                    return;
+                } else {
+                    input = remaining.to_owned();
+                }
+            } else {
+                panic!("cannot parse the remaining `{}`", remaining);
+            }
         }
     }
 
@@ -68,7 +77,7 @@ impl Interpreter {
 
 fn main() {
     let mut ctx = Interpreter::new();
-    ctx.execute_lines(include_str!("../example2.periodicode"));
+    ctx.execute_lines(include_str!("../example.periodicode"));
 }
 
 #[cfg(test)]

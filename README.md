@@ -11,6 +11,8 @@ A programming language where you can use repeating decimals and periodic continu
 
 See [example.periodicode](./example.periodicode) for the tutorial.
 
+See [example2.periodicode](./example2.periodicode) for a more concise summary.
+
 ### Repeating decimals
 
 Supports repeating decimals and automatically turns it into a fraction.
