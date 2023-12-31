@@ -1,0 +1,67 @@
+# A concise sample showing what PeriodiCode can do
+
+# mid-line comments
+@assert_eq(1, 1) # foo bar
+
+# repeated decimals
+# but with semicolons
+.6r142857; @assert_eq($_, 43/70);
+.r142857; @assert_eq($_, 1/7);
+0.1r6; @assert_eq($_, 1/6);
+12.; @assert_eq($_, 12);
+12; @assert_eq($_, 12);
+12.1; @assert_eq($_, 121/10);
+12.1r6; @assert_eq($_, 73/6);
+.1r6; @assert_eq($_, 1/6);
+.r3; @assert_eq($_, 1/3);
+
+# without the extra semicolon, the result is printed to the console
+.r3
+
+# you can use loads of prefix to specify the base of a particular literal
+0v100; @assert_eq($_, 400); # vigesimal
+0x100; @assert_eq($_, 256); # hexadecimal
+0z100; @assert_eq($_, 144); # dozenal
+0d100; @assert_eq($_, 100); # decimal
+0o100; @assert_eq($_, 64); # octal
+0s100; @assert_eq($_, 36); # senary
+0qn100; @assert_eq($_, 25); # quinary
+0qt100; @assert_eq($_, 16); # quaternary
+0t100; @assert_eq($_, 9); # ternary
+0b100; @assert_eq($_, 4); # binary
+
+# you can write the same thing with an extra dot and it makes no difference
+0v100.; @assert_eq($_, 400);
+0x100.; @assert_eq($_, 256);
+0z100.; @assert_eq($_, 144);
+0d100.; @assert_eq($_, 100);
+0o100.; @assert_eq($_, 64);
+0s100.; @assert_eq($_, 36);
+0qn100.; @assert_eq($_, 25);
+0qt100.; @assert_eq($_, 16);
+0t100.; @assert_eq($_, 9);
+0b100.; @assert_eq($_, 4);
+
+# of course, you can use the prefix to denote repeated decimals
+0s.r0313452421; @assert_eq($_, 1/11);
+
+# `p` inside a literal denotes multiplying the whole literal by powers of two
+# This is necessary to make it compatible with C++-style float literal
+0x1.p10; @assert_eq($_, 1024);
+0x1.p-10; @assert_eq($_, 1/1024);
+0b11.p-10; @assert_eq($_, 3/1024);
+0x11.p-10; @assert_eq($_, 17/1024);
+0d11.p-10; @assert_eq($_, 11/1024);
+
+# you can also use the `e` notation to multiply the literal by the power of its radix,
+# but since you need `e` as a digit in hexadecimal, an equivalent alternative `xp` can be used as a fallback
+0.1r6e1; @assert_eq($_, 5/3);
+0.1r6xp1; @assert_eq($_, 5/3);
+0x1e2; @assert_eq($_, 482);
+0x1xp2; @assert_eq($_, 256);
+
+# the following are syntactic errors: you need at least a single digit before the exponentiation part
+# .
+# .e0
+# .p1
+# .xp1

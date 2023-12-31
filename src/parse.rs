@@ -26,6 +26,10 @@ impl<'b> Parser<'b> {
         }
     }
 
+    pub fn get_radix_context(&mut self) -> u32 {
+        self.radix_context
+    }
+
     pub fn set_radix_context(&mut self, new: u32) {
         if new > 25 {
             panic!("radix greater than 25 is not supported")
