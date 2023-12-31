@@ -156,13 +156,8 @@ impl<'b> Parser<'b> {
         } else if let Some(buf_) = buf.strip_prefix('(') {
             self.buf = buf_;
             let value = self.parse_expression()?;
-            self.trim_start();
-            if let Some(buf) = self.buf.strip_prefix(')') {
-                self.buf = buf;
-                Ok(value)
-            } else {
-                Err("Mismatched parenthesis")
-            }
+            self.consume_char_or_err(')', "Mismatched parenthesis")?;
+            Ok(value)
         } else {
             let (value, remaining) =
                 numeric_literal::parse_numeric_literal_with_radix_context(buf, self.radix_context)?;
