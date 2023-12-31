@@ -96,6 +96,15 @@ impl<'b> Parser<'b> {
         }
     }
 
+    fn consume_char_or_err(&mut self, c: char, msg: &'static str) -> Result<(), &'static str> {
+        if let Some(buf_) = self.buf.strip_prefix(c) {
+            self.buf = buf_.trim_start();
+            Ok(())
+        } else {
+            Err(msg)
+        }
+    }
+
     fn parse_funccall_expression(&mut self) -> Result<Value, &'static str> {
         self.buf = self.buf.trim_start();
         if let Some(buf_) = self.buf.strip_prefix('@') {
@@ -113,18 +122,18 @@ impl<'b> Parser<'b> {
 
                         let second_arg = self.parse_expression()?;
                         self.buf = self.buf.trim_start();
-                        if let Some(buf_) = self.buf.strip_prefix(')') {
-                            self.buf = buf_.trim_start();
-                            if first_arg == second_arg {
-                                Ok(first_arg) // @assert_eq(7*6, 42) returns 42
-                            } else {
-                                panic!(
-                                    "ASSERTION FAILED: \nleft: {}\nright: {}",
-                                    first_arg, second_arg
-                                )
-                            }
+                        self.consume_char_or_err(
+                            ')',
+                            "The built-in function `assert_eq` expects exactly two arguments",
+                        )?;
+                        self.buf = self.buf.trim_start();
+                        if first_arg == second_arg {
+                            Ok(first_arg) // @assert_eq(7*6, 42) returns 42
                         } else {
-                            Err("The built-in function `assert_eq` expects exactly two arguments")
+                            panic!(
+                                "ASSERTION FAILED: \nleft: {}\nright: {}",
+                                first_arg, second_arg
+                            )
                         }
                     } else {
                         Err("The built-in function `assert_eq` expects exactly two arguments")
