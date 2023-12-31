@@ -38,12 +38,12 @@ impl<'b> Parser<'b> {
     }
 
     pub fn parse_expression(&mut self) -> Result<Value, &'static str> {
-        self.buf = self.buf.trim_start();
+        self.trim_start();
         self.parse_additive_expression()
     }
 
     fn parse_additive_expression(&mut self) -> Result<Value, &'static str> {
-        self.buf = self.buf.trim_start();
+        self.trim_start();
         let mut val = self.parse_multiplicative_expression()?;
         loop {
             if let Some(stripped) = self.buf.trim_start().strip_prefix('+') {
@@ -63,7 +63,7 @@ impl<'b> Parser<'b> {
     }
 
     fn parse_multiplicative_expression(&mut self) -> Result<Value, &'static str> {
-        self.buf = self.buf.trim_start();
+        self.trim_start();
         let mut val = self.parse_unary_expression()?;
         loop {
             if let Some(stripped) = self.buf.trim_start().strip_prefix('*') {
@@ -97,6 +97,7 @@ impl<'b> Parser<'b> {
     }
 
     fn consume_char_or_err(&mut self, c: char, msg: &'static str) -> Result<(), &'static str> {
+        self.trim_start();
         if let Some(buf_) = self.buf.strip_prefix(c) {
             self.buf = buf_.trim_start();
             Ok(())
@@ -105,33 +106,32 @@ impl<'b> Parser<'b> {
         }
     }
 
+    fn trim_start(&mut self) {
+        self.buf = self.buf.trim_start()
+    }
+
     fn parse_funccall_expression(&mut self) -> Result<Value, &'static str> {
-        self.buf = self.buf.trim_start();
+        self.trim_start();
         if let Some(buf_) = self.buf.strip_prefix('@') {
             self.buf = buf_.trim_start();
             let ident = self.parse_identifier()?;
             if ident.0 == "assert_eq" {
-                self.buf = self.buf.trim_start();
                 self.consume_char_or_err(
                     '(',
                     "No parenthesis after the built-in function `assert_eq`",
                 )?;
 
-                self.buf = self.buf.trim_start();
                 let first_arg = self.parse_expression()?;
-                self.buf = self.buf.trim_start();
                 self.consume_char_or_err(
                     ',',
                     "The built-in function `assert_eq` expects exactly two arguments",
                 )?;
-                self.buf = self.buf.trim_start();
                 let second_arg = self.parse_expression()?;
-                self.buf = self.buf.trim_start();
                 self.consume_char_or_err(
                     ')',
                     "The built-in function `assert_eq` expects exactly two arguments",
                 )?;
-                self.buf = self.buf.trim_start();
+                self.trim_start();
                 if first_arg == second_arg {
                     Ok(first_arg) // @assert_eq(7*6, 42) returns 42
                 } else {
@@ -156,7 +156,7 @@ impl<'b> Parser<'b> {
         } else if let Some(buf_) = buf.strip_prefix('(') {
             self.buf = buf_;
             let value = self.parse_expression()?;
-            self.buf = self.buf.trim_start();
+            self.trim_start();
             if let Some(buf) = self.buf.strip_prefix(')') {
                 self.buf = buf;
                 Ok(value)
