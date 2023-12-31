@@ -112,34 +112,33 @@ impl<'b> Parser<'b> {
             let ident = self.parse_identifier()?;
             if ident.0 == "assert_eq" {
                 self.buf = self.buf.trim_start();
-                if let Some(buf_) = self.buf.strip_prefix('(') {
-                    self.buf = buf_.trim_start();
-                    let first_arg = self.parse_expression()?;
-                    self.buf = self.buf.trim_start();
+                self.consume_char_or_err(
+                    '(',
+                    "No parenthesis after the built-in function `assert_eq`",
+                )?;
 
-                    if let Some(buf_) = self.buf.strip_prefix(',') {
-                        self.buf = buf_.trim_start();
-
-                        let second_arg = self.parse_expression()?;
-                        self.buf = self.buf.trim_start();
-                        self.consume_char_or_err(
-                            ')',
-                            "The built-in function `assert_eq` expects exactly two arguments",
-                        )?;
-                        self.buf = self.buf.trim_start();
-                        if first_arg == second_arg {
-                            Ok(first_arg) // @assert_eq(7*6, 42) returns 42
-                        } else {
-                            panic!(
-                                "ASSERTION FAILED: \nleft: {}\nright: {}",
-                                first_arg, second_arg
-                            )
-                        }
-                    } else {
-                        Err("The built-in function `assert_eq` expects exactly two arguments")
-                    }
+                self.buf = self.buf.trim_start();
+                let first_arg = self.parse_expression()?;
+                self.buf = self.buf.trim_start();
+                self.consume_char_or_err(
+                    ',',
+                    "The built-in function `assert_eq` expects exactly two arguments",
+                )?;
+                self.buf = self.buf.trim_start();
+                let second_arg = self.parse_expression()?;
+                self.buf = self.buf.trim_start();
+                self.consume_char_or_err(
+                    ')',
+                    "The built-in function `assert_eq` expects exactly two arguments",
+                )?;
+                self.buf = self.buf.trim_start();
+                if first_arg == second_arg {
+                    Ok(first_arg) // @assert_eq(7*6, 42) returns 42
                 } else {
-                    Err("No parenthesis after the built-in function `assert_eq`")
+                    panic!(
+                        "ASSERTION FAILED: \nleft: {}\nright: {}",
+                        first_arg, second_arg
+                    )
                 }
             } else {
                 panic!("UNSUPPORTED FUNCTION: `@{}`", ident.0)
