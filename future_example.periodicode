@@ -1,3 +1,29 @@
+# Basic arithmetic; supports radix prefixes such as 0x and 0b
+@assert_eq(3/5 + 1/4 - 1/0x32, 83/100)
+
+# You write an `r` right before the repetition begins.
+# 0.6142857142857142857142857
+#    |rep  |rep  |rep  |rep  |
+@assert_eq(0.6r142857, 43/70)
+
+# `p` inside a literal denotes multiplying the whole literal by powers of two
+# This is necessary to make it compatible with C++-style float literal
+@assert_eq(0x1.p-10, 1/1024)
+@assert_eq(0b11.p-10, 3/1024)
+@assert_eq(0x11.p-10, 17/1024)
+
+# Note that you use $_ to denote the result of the previous computation
+3
+$_ + 2
+
+# You can write continued fraction with the standard syntax
+[3; 7, 15, 1]
+@assert_eq($_, 355 / 113);
+
+# Generalized continued fraction is automatically normalized to a canonical form
+[1/2; 3/4, 5/6]
+@assert_eq($_, [1; 78]);
+
 # can also introduce a local radix-context
 @senary { .r0313452421 };
 @assert_eq($_, 1/11);
@@ -9,3 +35,6 @@
 # you can change the global radix-context
 @set_radix(@hexadecimal);
 beef; @assert_eq($_, 0d48879);
+
+# you can load the content of another file
+@load { "example.periodicode" }
