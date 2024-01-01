@@ -21,7 +21,7 @@ pub fn rational_print_summary(ans: &BigRational, external_radix_context: u32) {
         );
     }
     if external_radix_context != 10 {
-        print!(" (DEC{ans})");
+        print!(" \x1b[2;32m# @decimal {{ {ans} }}\x1b[00m"); // faint green
     }
 
     println!();
@@ -31,9 +31,9 @@ pub fn rational_print_summary(ans: &BigRational, external_radix_context: u32) {
     print_continued_fraction_radix(ans, external_radix_context);
 
     if external_radix_context != 10 {
-        print!(" (DEC");
+        print!(" \x1b[2;32m# @decimal {{ "); // faint green
         print_continued_fraction_radix(ans, 10);
-        print!(")");
+        print!(" }}\x1b[00m"); // reset
     }
 
     println!();
@@ -41,6 +41,12 @@ pub fn rational_print_summary(ans: &BigRational, external_radix_context: u32) {
     print!("digt: ");
 
     print_digit_expansion_radix(ans, external_radix_context);
+
+    if external_radix_context != 10 {
+        print!(" \x1b[2;32m# @decimal {{ "); // faint green
+        print_digit_expansion_radix(ans, 10);
+        print!(" }}\x1b[00m"); // reset
+    }
 
     println!();
 }

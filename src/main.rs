@@ -23,8 +23,14 @@ impl Interpreter {
     fn execute_line(&mut self, input: &str) {
         let mut input = input.to_owned();
         println!(
-            "\x1b[1;34mPeriodiCode\x1b[00m:\x1b[1;32mDEC{:<2}\x1b[00m> {}",
-            self.radix_context, input
+            "\x1b[1;34mPeriodiCode\x1b[00m:\x1b[{};32mbase-{:<2}\x1b[00m> {}",
+            if self.radix_context == 10 {
+                "0" /* normal */
+            } else {
+                "1;4" /* bold, underline */
+            },
+            self.radix_context,
+            input
         );
 
         if input.trim_start().starts_with('#') || input.trim_start().is_empty() {

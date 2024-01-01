@@ -143,8 +143,21 @@ $_ + 2
 # Regardless, the result can be accessed with $_
 $_ * 2
 
+#########################################
+# Chapter 3. Changing the Radix-context
+#########################################
+
+# You can change the global radix-context
+@set_radix(@hexadecimal)
+beef / a
+@assert_eq($_, 0d4887.9);
+
+@set_radix(@decimal)
+@assert_eq(4 * 4, 16);
+
+
 ##################################################
-# Chapter 3. Continued Fraction
+# Chapter 4. Continued Fraction
 ##################################################
 
 # You can write continued fraction with the standard syntax

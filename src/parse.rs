@@ -1,4 +1,6 @@
+use num_bigint::BigInt;
 use num_rational::BigRational;
+use num_traits::One;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -139,6 +141,40 @@ impl<'b> Parser<'b> {
                 } else {
                     panic!("ASSERTION FAILED: \nleft: {first_arg}\nright: {second_arg}",)
                 }
+            } else if ident.0 == "set_radix" {
+                self.consume_char_or_err(
+                    '(',
+                    "No parenthesis after the built-in function `set_radix`",
+                )?;
+                self.consume_char_or_err(
+                    '@',
+                    "No radix argument found in the built-in function `set_radix`",
+                )?;
+                self.trim_start();
+                let radix_ident = self.parse_identifier()?;
+
+                let radix: u32 = match &radix_ident.0[..] {
+                    "binary" => 2,
+                    "trinary" | "ternary" => 3,
+                    "quaternary" => 4,
+                    "quinary" | "pental" => 5,
+                    "senary" | "seximal" | "heximal" => 6,
+                    "octal" | "oct" => 8,
+                    "decimal" | "denary" | "decanary" | "dec" => 10,
+                    "duodecimal" | "dozenal" => 12,
+                    "hexadecimal" | "hex" => 16,
+                    "vigesimal" => 20,
+                    _ => return Err("Unrecognizable radix name found"),
+                };
+
+                self.radix_context = radix;
+
+                self.consume_char_or_err(
+                    ')',
+                    "The built-in function `set_radix` expects exactly one argument",
+                )?;
+
+                Ok(BigRational::new(BigInt::from(radix), BigInt::one()))
             } else {
                 panic!("UNSUPPORTED FUNCTION: `@{}`", ident.0)
             }
@@ -182,7 +218,11 @@ impl<'b> Parser<'b> {
                     }
                 }
 
-                let final_result = values.into_iter().rev().reduce(|acc, e| acc.recip() + e).unwrap();
+                let final_result = values
+                    .into_iter()
+                    .rev()
+                    .reduce(|acc, e| acc.recip() + e)
+                    .unwrap();
                 Ok(final_result)
             } else {
                 Err("Expected `]` or `;` after the first slot of a continued-fraction literal")
