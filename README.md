@@ -19,6 +19,10 @@ Supports repeating decimals and automatically turns it into a fraction.
 
 For instance, if you want to represent `0.16666....`, write `0.1r6` ("zero point one; repeated sixes)
 
+### Continued fraction
+
+Natively supports the standard syntax `[3; 7, 15, 1]`
+
 ### Base freedom
 You can choose what base/radix you use to represent numbers
 

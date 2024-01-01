@@ -88,7 +88,7 @@ fn parse_numeric_literal_with_both_contexts(
     let (before_rep, repeating_digits) = match caps.name("dot") {
         Some(u) => {
             if u.as_str() == "." && integral.is_empty() {
-                return Err("\"A single dot `.`, optionally followed by exponent\" is forbidden");
+                return Err("\"A standalone single dot `.`, optionally followed by exponent\" is forbidden");
             }
 
             (

@@ -157,6 +157,36 @@ impl<'b> Parser<'b> {
             let value = self.parse_expression()?;
             self.consume_char_or_err(')', "Mismatched parenthesis")?;
             Ok(value)
+        } else if let Some(buf_) = buf.strip_prefix('[') {
+            self.buf = buf_;
+            let first_value = self.parse_expression()?;
+            let buf = self.buf.trim_start();
+            if let Some(buf_) = buf.strip_prefix(']') {
+                self.buf = buf_;
+                Ok(first_value)
+            } else if let Some(buf_) = buf.strip_prefix(';') {
+                self.buf = buf_;
+                // Currently forbid trailing commas
+                // what follows is (<value> <comma>)* <value> <]>
+                let mut values = vec![first_value];
+                loop {
+                    let val = self.parse_expression()?;
+                    values.push(val);
+                    let buf = self.buf.trim_start();
+                    if let Some(buf_) = buf.strip_prefix(',') {
+                        self.buf = buf_;
+                        continue;
+                    } else if let Some(buf_) = buf.strip_prefix(']') {
+                        self.buf = buf_;
+                        break;
+                    }
+                }
+
+                let final_result = values.into_iter().rev().reduce(|acc, e| acc.recip() + e).unwrap();
+                Ok(final_result)
+            } else {
+                Err("Expected `]` or `;` after the first slot of a continued-fraction literal")
+            }
         } else {
             let (value, remaining) =
                 numeric_literal::parse_numeric_literal_with_radix_context(buf, self.radix_context)?;

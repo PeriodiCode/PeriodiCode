@@ -136,3 +136,15 @@ $_
 3
 $_
 $_ + 2
+
+##################################################
+# Chapter 3. Continued Fraction
+##################################################
+
+# You can write continued fraction with the standard syntax
+[3; 7, 15, 1]
+@assert_eq($_, 355 / 113);
+
+# Generalized continued fraction is automatically normalized to a canonical form
+[1/2; 3/4, 5/6]
+@assert_eq($_, [1; 78]);
