@@ -137,6 +137,12 @@ $_
 $_
 $_ + 2
 
+# Use semicolon to suppress the output
+2 + 3;
+
+# Regardless, the result can be accessed with $_
+$_ * 2
+
 ##################################################
 # Chapter 3. Continued Fraction
 ##################################################
