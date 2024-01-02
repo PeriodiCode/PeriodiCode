@@ -4,9 +4,11 @@
 # that might be supported in the future version.
 #################################################
 
-# "@should_throw" directive also takes string literals.
-# It evaluates the content of the string literals
-# and returns the index (0-index) of the first string literal to throw an error.
-# It throws whenever the content does not throw.
-@should_throw { "1+2"; "@set_radix(@decimal); beef" }
-@assert_eq($_, 1);
+# variable
+$three = 3;
+$five = 5;
+@assert_eq($three + $five, 8);
+
+# Recurring continued fraction
+$sqrt3 = [1; @rep{ 1, 2 }];
+@assert_eq($sqrt3 * $sqrt3, 3);

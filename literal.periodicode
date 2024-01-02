@@ -61,3 +61,7 @@
 # .e0
 # .p1
 # .xp1
+@should_fail("."); 
+@should_fail(".e0");
+@should_fail(".p1");
+@should_fail(".xp1");

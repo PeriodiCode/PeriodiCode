@@ -246,6 +246,48 @@ impl<'b> Parser<'b> {
                 self.parse_block_expression(Self::parse_string_literal_and_load_single_file_dirty)
             } else if ident.0 == "load" {
                 self.parse_block_expression(Self::parse_string_literal_and_load_single_file_clean)
+            } else if ident.0 == "should_fail" {
+                self.consume_char_or_err(
+                    '(',
+                    "No parenthesis after the built-in function `should_fail`",
+                )?;
+
+                let content = self.parse_string_literal()?;
+
+                println!("\x1b[2;31m##### Start of ###should_fail###\x1b[00m",); // faint red
+
+                // boot up the new interpreter, inheriting the environment
+                let mut new_stack_trace = self.stack_trace.clone();
+                new_stack_trace.push(S("\x1b[0;31m###should_fail###\x1b[00m"));
+
+                let mut new_ctx = Interpreter::new(
+                    self.previous_value.clone(),
+                    self.radix_context,
+                    new_stack_trace,
+                );
+                
+                let ans = match new_ctx.execute_lines(&content) {
+                    Err(msg) => {
+                        println!("\x1b[2;31m##### End of ###should_fail###\x1b[00m");
+                        println!("As expected, failure occurred: '\x1b[4m{msg}\x1b[00m'");
+
+                        // $_ is the result of a successful computation preceding the failure
+                        Ok(new_ctx.previous_value.clone())
+                    }
+
+                    Ok((value, _)) => {
+                        println!("\x1b[2;31m##### End of ###should_fail###\x1b[00m");
+                        Err(format!("\x1b[1;31m`@should_fail` DID NOT FAIL; it instead succeeded with the following value: {value}"))
+                    }
+                };
+
+                self.consume_char_or_err(
+                    ')',
+                    "The built-in function `should_fail` expects exactly one argument",
+                )?;
+                self.trim_start();
+
+                ans
             } else if ident.0 == "assert_eq" {
                 self.consume_char_or_err(
                     '(',
@@ -295,7 +337,10 @@ impl<'b> Parser<'b> {
 
                 Ok(BigRational::new(BigInt::from(radix), BigInt::one()))
             } else {
-                Err(format!("UNSUPPORTED IDENTIFIER found after `@`: `@{}`", ident.0))
+                Err(format!(
+                    "UNSUPPORTED IDENTIFIER found after `@`: `@{}`",
+                    ident.0
+                ))
             }
         } else {
             self.parse_primary_expression()
@@ -397,7 +442,8 @@ impl<'b> Parser<'b> {
     }
 
     fn parse_identifier(&mut self) -> Result<Identifier, String> {
-        static RE_IDENTIFIER: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9a-zA-Z_]+").expect("regex compilation failed"));
+        static RE_IDENTIFIER: Lazy<Regex> =
+            Lazy::new(|| Regex::new(r"^[0-9a-zA-Z_]+").expect("regex compilation failed"));
 
         match RE_IDENTIFIER.captures(self.buf) {
             None => Err(S("No identifier found after `@`")),
