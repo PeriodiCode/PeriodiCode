@@ -9,11 +9,15 @@ A programming language where you can use repeating decimals and periodic continu
 
 ## Features
 
+The following image (code available as [summary.periodicode](./summary.periodicode)) gives a concise summary of what PeriodiCode can do.
+
+![](summary.png)
+
+As can be seen from above, **[syntax highlighting is available on VS Code](https://github.com/PeriodiCode/vscode-periodicode-syntax-highlight)**
+
 See [long_tutorial.periodicode](./long_tutorial.periodicode) for the full tutorial.
 
-[summary.periodicode](./summary.periodicode) gives a more concise summary.
-
-[literal.periodicode](./literal.periodicode) showcases the capability of numeric literals.
+[literal.periodicode](./literal.periodicode) showcases the capability of numeric literals, which is also explained below.
 
 ### Repeating decimals
 
