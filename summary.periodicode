@@ -37,4 +37,4 @@ $_ + 2
 beef; @assert_eq($_, 0d48879);
 
 # you can load other files
-@load { "literal.periodicode"; "long_tutorial.periodicode" }
+@load { "literal.periodicode"; "long_tutorial.periodicode" };

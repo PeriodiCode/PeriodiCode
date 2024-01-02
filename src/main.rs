@@ -61,11 +61,12 @@ impl Interpreter {
     }
 
     fn execute_line(&mut self, input: &str) {
-        let stack_trace_str = self
-            .stack_trace
-            .iter()
-            .map(|s| format!("\x1b[0;34m{}\x1b[00m:", s)) /* normal blue */
-            .collect::<String>();
+        let stack_trace_str = self.stack_trace.iter().fold(String::new(), |mut a, b| {
+            a += "\x1b[0;34m"; /* normal blue */
+            a += b;
+            a += "\x1b[00m:";
+            a
+        });
 
         let mut input = input.to_owned();
         println!(
@@ -117,7 +118,7 @@ impl Interpreter {
 
 fn main() {
     let mut ctx = Interpreter::new(BigRational::zero(), 10, vec![]);
-    ctx.execute_lines(include_str!("../summary.periodicode"));
+    ctx.execute_lines(r#"@load { "summary.periodicode" }"#);
 }
 
 #[cfg(test)]
