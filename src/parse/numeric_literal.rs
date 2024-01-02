@@ -84,6 +84,10 @@ fn parse_numeric_literal_with_both_contexts(
     };
 
     let whole = caps.get(0).unwrap().as_str();
+    if whole.is_empty() {
+        return Err("No parse as a numeric literal");
+    }
+
     let integral = caps.name("integral").unwrap().as_str();
     let (before_rep, repeating_digits) = match caps.name("dot") {
         Some(u) => {
