@@ -4,6 +4,8 @@ use num_traits::One;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
+use crate::{judge_termination_or_semicolons, Judgement};
+
 pub mod numeric_literal;
 
 type Value = BigRational;
@@ -37,7 +39,7 @@ impl<'b> Parser<'b> {
         self.radix_context
     }
 
-    pub fn parse_bare_expression(&mut self) -> Result<Value, &'static str> {
+    pub fn parse_expression(&mut self) -> Result<Value, &'static str> {
         self.trim_start();
         self.parse_additive_expression()
     }
@@ -92,7 +94,7 @@ impl<'b> Parser<'b> {
             let value = self.parse_unary_expression()?;
             Ok(-value)
         } else {
-            self.parse_funccall_expression()
+            self.funccall_or_decorated_block()
         }
     }
 
@@ -110,23 +112,29 @@ impl<'b> Parser<'b> {
         self.buf = self.buf.trim_start();
     }
 
-    fn parse_funccall_expression(&mut self) -> Result<Value, &'static str> {
+    fn funccall_or_decorated_block(&mut self) -> Result<Value, &'static str> {
         self.trim_start();
         if let Some(buf_) = self.buf.strip_prefix('@') {
             self.buf = buf_.trim_start();
             let ident = self.parse_identifier()?;
-            if ident.0 == "assert_eq" {
+            if let Some(new_radix_content) = ident.to_radix() {
+                let stashed_radix_content = self.radix_context;
+                self.radix_context = new_radix_content;
+                let val = self.parse_block_expression()?;
+                self.radix_context = stashed_radix_content;
+                Ok(val)
+            } else if ident.0 == "assert_eq" {
                 self.consume_char_or_err(
                     '(',
                     "No parenthesis after the built-in function `assert_eq`",
                 )?;
 
-                let first_arg = self.parse_bare_expression()?;
+                let first_arg = self.parse_expression()?;
                 self.consume_char_or_err(
                     ',',
                     "The built-in function `assert_eq` expects exactly two arguments",
                 )?;
-                let second_arg = self.parse_bare_expression()?;
+                let second_arg = self.parse_expression()?;
                 self.consume_char_or_err(
                     ')',
                     "The built-in function `assert_eq` expects exactly two arguments",
@@ -149,19 +157,9 @@ impl<'b> Parser<'b> {
                 self.trim_start();
                 let radix_ident = self.parse_identifier()?;
 
-                let radix: u32 = match &radix_ident.0[..] {
-                    "binary" => 2,
-                    "trinary" | "ternary" => 3,
-                    "quaternary" => 4,
-                    "quinary" | "pental" => 5,
-                    "senary" | "seximal" | "heximal" => 6,
-                    "octal" | "oct" => 8,
-                    "decimal" | "denary" | "decanary" | "dec" => 10,
-                    "duodecimal" | "dozenal" => 12,
-                    "hexadecimal" | "hex" => 16,
-                    "vigesimal" => 20,
-                    _ => return Err("Unrecognizable radix name found"),
-                };
+                let radix: u32 = radix_ident
+                    .to_radix()
+                    .ok_or("Unrecognizable radix name found")?;
 
                 self.radix_context = radix;
 
@@ -179,19 +177,56 @@ impl<'b> Parser<'b> {
         }
     }
 
+    fn parse_block_expression(&mut self) -> Result<Value, &'static str> {
+        self.trim_start();
+        self.consume_char_or_err('{', "Expected the start of a block")?;
+
+        // Inside the block, it's allowed to have as many preceding or trailing semicolons,
+        // but it must contain at least one expression
+        loop {
+            match judge_termination_or_semicolons(self.buf, || ()) {
+                Judgement::EndOfLineEncountered => {
+                    panic!("Line is terminated but the block is unterminated")
+                }
+                Judgement::ExpressionTerminatedWithSemicolon(s) => self.buf = s,
+                Judgement::NoConsumption => {},
+            }
+
+            let val = self.parse_expression()?;
+            self.trim_start();
+            match judge_termination_or_semicolons(self.buf, || ()) {
+                Judgement::NoConsumption => {
+                    self.consume_char_or_err('}', "Expected an operator or end of block")?;
+                    return Ok(val);
+                }
+                Judgement::EndOfLineEncountered => {
+                    panic!("Line is terminated but the block is unterminated")
+                }
+                Judgement::ExpressionTerminatedWithSemicolon(s) => self.buf = s,
+            }
+            self.trim_start();
+            if let Some(buf_) = self.buf.strip_prefix('}') {
+                self.buf = buf_.trim_start();
+                return Ok(val);
+            }
+        }
+    }
+
     fn parse_primary_expression(&mut self) -> Result<Value, &'static str> {
         let buf = self.buf.trim_start();
-        if let Some(buf) = buf.strip_prefix("$_") {
+        if buf.starts_with('{') {
+            self.parse_block_expression()
+        } else if let Some(buf) = buf.strip_prefix("$_") {
             self.buf = buf;
             Ok(self.previous_value.clone())
         } else if let Some(buf_) = buf.strip_prefix('(') {
             self.buf = buf_;
-            let value = self.parse_bare_expression()?;
+            let value = self.parse_expression()?;
             self.consume_char_or_err(')', "Mismatched parenthesis")?;
             Ok(value)
         } else if let Some(buf_) = buf.strip_prefix('[') {
             self.buf = buf_;
-            let first_value = self.parse_bare_expression()?;
+            let first_value = self.parse_expression()?;
             let buf = self.buf.trim_start();
             if let Some(buf_) = buf.strip_prefix(']') {
                 self.buf = buf_;
@@ -202,7 +237,7 @@ impl<'b> Parser<'b> {
                 // what follows is (<value> <comma>)* <value> <]>
                 let mut values = vec![first_value];
                 loop {
-                    let val = self.parse_bare_expression()?;
+                    let val = self.parse_expression()?;
                     values.push(val);
                     let buf = self.buf.trim_start();
                     if let Some(buf_) = buf.strip_prefix(',') {
@@ -242,5 +277,24 @@ impl<'b> Parser<'b> {
                 Ok(Identifier(String::from(whole)))
             }
         }
+    }
+}
+
+impl Identifier {
+    fn to_radix(&self) -> Option<u32> {
+        let radix: u32 = match &self.0[..] {
+            "binary" => 2,
+            "trinary" | "ternary" => 3,
+            "quaternary" => 4,
+            "quinary" | "pental" => 5,
+            "senary" | "seximal" | "heximal" => 6,
+            "octal" | "oct" => 8,
+            "decimal" | "denary" | "decanary" | "dec" => 10,
+            "duodecimal" | "dozenal" => 12,
+            "hexadecimal" | "hex" => 16,
+            "vigesimal" => 20,
+            _ => return None,
+        };
+        Some(radix)
     }
 }
