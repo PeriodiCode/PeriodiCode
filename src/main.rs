@@ -1,5 +1,7 @@
 #![warn(clippy::pedantic)]
 
+use std::ops::ControlFlow;
+
 use num_rational::BigRational;
 use parse::Parser;
 
@@ -20,6 +22,24 @@ impl Interpreter {
         }
     }
 
+    // `f` is only run when the input has no trailing semicolon
+    fn foo(input: &mut String, f: fn() -> ()) -> Option<ControlFlow<(), ()>> {
+        if input.trim_start().starts_with('#') || input.trim_start().is_empty() {
+            /* line-comment; ignore */
+            f();
+            return Some(ControlFlow::Break(()));
+        } else if input.trim_start().starts_with(';') {
+            let remaining = input.trim_start().strip_prefix(';').unwrap().trim_start();
+            if remaining.is_empty() || remaining.starts_with('#') {
+                // The line ends with a semicolon; don't print anything
+                return Some(ControlFlow::Break(()));
+            }
+            *input = remaining.to_owned();
+            return Some(ControlFlow::Continue(()));
+        }
+        None
+    }
+
     fn execute_line(&mut self, input: &str) {
         let mut input = input.to_owned();
         println!(
@@ -33,16 +53,8 @@ impl Interpreter {
             input
         );
 
-        if input.trim_start().starts_with('#') || input.trim_start().is_empty() {
-            /* line-comment; ignore */
+        if matches!(Self::foo(&mut input, || ()), Some(ControlFlow::Break(()))) {
             return;
-        } else if input.trim_start().starts_with(';') {
-            let remaining = input.trim_start().strip_prefix(';').unwrap().trim_start();
-            if remaining.is_empty() || remaining.starts_with('#') {
-                // The line ends with a semicolon; don't print anything
-                return;
-            }
-            input = remaining.to_owned();
         }
 
         let mut ans;
