@@ -3,6 +3,7 @@
 use std::ops::ControlFlow;
 
 use num_rational::BigRational;
+use num_traits::Zero;
 use parse::Parser;
 
 use crate::print::rational_print_summary;
@@ -10,14 +11,14 @@ use crate::print::rational_print_summary;
 mod numerical_util;
 
 struct Interpreter {
-    previous_value: Option<BigRational>,
+    previous_value: BigRational,
     radix_context: u32,
 }
 
 impl Interpreter {
     fn new() -> Self {
         Self {
-            previous_value: None,
+            previous_value: BigRational::zero(),
             radix_context: 10,
         }
     }
@@ -72,10 +73,10 @@ impl Interpreter {
             let remaining = parser.get_buf().trim_start();
 
             // Set the result of the final expression to `$_`
-            self.previous_value = Some(ans);
+            self.previous_value = ans;
 
             match Self::handle_empty_or_semicolon(remaining, || {
-                rational_print_summary(self.previous_value.as_ref().unwrap(), self.radix_context);
+                rational_print_summary(&self.previous_value, self.radix_context);
             }) {
                 Some(ControlFlow::Break(())) => return,
                 Some(ControlFlow::Continue(s)) => input = s,

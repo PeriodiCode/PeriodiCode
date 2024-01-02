@@ -1,6 +1,6 @@
 use num_bigint::BigInt;
 use num_rational::BigRational;
-use num_traits::One;
+use num_traits::{One, Zero};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -10,7 +10,7 @@ type Value = BigRational;
 
 pub struct Parser<'a> {
     radix_context: u32,
-    previous_value: Option<Value>,
+    previous_value: Value,
     buf: &'a str,
 }
 
@@ -23,7 +23,7 @@ impl<'b> Parser<'b> {
     pub fn new(buf: &'b str) -> Self {
         Self {
             radix_context: 10,
-            previous_value: None,
+            previous_value: BigRational::zero(),
             buf,
         }
     }
@@ -37,7 +37,7 @@ impl<'b> Parser<'b> {
         self.radix_context = new;
     }
 
-    pub fn set_previous_value(&mut self, previous_value: Option<Value>) {
+    pub fn set_previous_value(&mut self, previous_value: Value) {
         self.previous_value = previous_value;
     }
 
@@ -187,7 +187,7 @@ impl<'b> Parser<'b> {
         let buf = self.buf.trim_start();
         if let Some(buf) = buf.strip_prefix("$_") {
             self.buf = buf;
-            Ok(self.previous_value.clone().unwrap())
+            Ok(self.previous_value.clone())
         } else if let Some(buf_) = buf.strip_prefix('(') {
             self.buf = buf_;
             let value = self.parse_expression()?;
