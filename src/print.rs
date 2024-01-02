@@ -53,7 +53,7 @@ pub fn rational_print_summary(ans: &BigRational, external_radix_context: u32) {
 
 fn print_continued_fraction_radix(ans: &BigRational, external_radix_context: u32) {
     let mut cont_frac_iter = FiniteContinuedFractionIter::new(ans);
-    let initial = cont_frac_iter.next().unwrap();
+    let initial = cont_frac_iter.next().expect("empty iterator");
     let remaining: Vec<BigInt> = cont_frac_iter.collect();
     if remaining.is_empty() {
         print!("[{}]", initial.to_str_radix(external_radix_context));
@@ -107,7 +107,7 @@ fn print_digit_expansion_radix(ans: &BigRational, external_radix_context: u32) {
         }
 
         if f_list.contains(&f) {
-            let pos = f_list.iter().position(|k| k == &f).unwrap();
+            let pos = f_list.iter().position(|k| k == &f).expect("empty iterator");
             print!("{}r{}", digits[0..pos].join(""), digits[pos..].join(""));
             return;
         }

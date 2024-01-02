@@ -1,10 +1,10 @@
-use std::io::Read;
-
+use big_s::S;
 use num_bigint::BigInt;
 use num_rational::BigRational;
 use num_traits::{One, Zero};
 use once_cell::sync::Lazy;
 use regex::Regex;
+use std::io::Read;
 
 use crate::{judge_termination_or_semicolons, Interpreter, Judgement};
 
@@ -48,12 +48,12 @@ impl<'b> Parser<'b> {
         self.radix_context
     }
 
-    pub fn parse_expression(&mut self) -> Result<Value, &'static str> {
+    pub fn parse_expression(&mut self) -> Result<Value, String> {
         self.trim_start();
         self.parse_additive_expression()
     }
 
-    fn parse_additive_expression(&mut self) -> Result<Value, &'static str> {
+    fn parse_additive_expression(&mut self) -> Result<Value, String> {
         self.trim_start();
         let mut val = self.parse_multiplicative_expression()?;
         loop {
@@ -73,7 +73,7 @@ impl<'b> Parser<'b> {
         Ok(val)
     }
 
-    fn parse_multiplicative_expression(&mut self) -> Result<Value, &'static str> {
+    fn parse_multiplicative_expression(&mut self) -> Result<Value, String> {
         self.trim_start();
         let mut val = self.parse_unary_expression()?;
         loop {
@@ -92,7 +92,7 @@ impl<'b> Parser<'b> {
         Ok(val)
     }
 
-    fn parse_unary_expression(&mut self) -> Result<Value, &'static str> {
+    fn parse_unary_expression(&mut self) -> Result<Value, String> {
         let buf = self.buf.trim_start();
         if let Some(buf) = buf.strip_prefix('+') {
             self.buf = buf;
@@ -107,13 +107,13 @@ impl<'b> Parser<'b> {
         }
     }
 
-    fn consume_char_or_err(&mut self, c: char, msg: &'static str) -> Result<(), &'static str> {
+    fn consume_char_or_err(&mut self, c: char, msg: &'static str) -> Result<(), String> {
         self.trim_start();
         if let Some(buf_) = self.buf.strip_prefix(c) {
             self.buf = buf_.trim_start();
             Ok(())
         } else {
-            Err(msg)
+            Err(S(msg))
         }
     }
 
@@ -121,7 +121,7 @@ impl<'b> Parser<'b> {
         self.buf = self.buf.trim_start();
     }
 
-    fn parse_string_literal(&mut self) -> Result<String, &'static str> {
+    fn parse_string_literal(&mut self) -> Result<String, String> {
         self.trim_start();
         let mut s = String::new();
         if let Some(buf_) = self.buf.strip_prefix('"') {
@@ -144,13 +144,17 @@ impl<'b> Parser<'b> {
                         Some((_, '\\')) => {
                             s.push('\\');
                         }
-                        None => return Err("Unterminated escape sequence inside a string literal"),
-                        Some((_, _)) => {
-                            return Err("Unsupported escape sequence inside a string literal")
+                        None => {
+                            return Err(S("Unterminated escape sequence inside a string literal"))
+                        }
+                        Some((_, c)) => {
+                            return Err(format!(
+                                "Unsupported escape sequence inside a string literal: \\{c}"
+                            ))
                         }
                     },
                     Some((_, c)) => s.push(c),
-                    None => return Err("Unterminated string literal"),
+                    None => return Err(S("Unterminated string literal")),
                 }
             };
 
@@ -158,11 +162,11 @@ impl<'b> Parser<'b> {
 
             Ok(s)
         } else {
-            Err("Not a string literal")
+            Err(S("Not a string literal"))
         }
     }
 
-    fn parse_string_literal_and_load_single_file_dirty(&mut self) -> Result<Value, &'static str> {
+    fn parse_string_literal_and_load_single_file_dirty(&mut self) -> Result<Value, String> {
         let filename = self.parse_string_literal()?;
         println!("\x1b[2;34m##### Start of {filename}: \x1b[00m"); // faint blue
 
@@ -173,14 +177,19 @@ impl<'b> Parser<'b> {
 
         // boot up the new interpreter, inheriting the environment
         let mut new_stack_trace = self.stack_trace.clone();
-        new_stack_trace.push(filename.strip_suffix(".periodicode").unwrap_or(&filename).to_owned());
+        new_stack_trace.push(
+            filename
+                .strip_suffix(".periodicode")
+                .unwrap_or(&filename)
+                .to_owned(),
+        );
 
         let mut new_ctx = Interpreter::new(
             self.previous_value.clone(),
             self.radix_context,
             new_stack_trace,
         );
-        let (value, radix_context) = new_ctx.execute_lines(&content);
+        let (value, radix_context) = new_ctx.execute_lines(&content)?;
 
         self.previous_value = value.clone();
 
@@ -192,7 +201,7 @@ impl<'b> Parser<'b> {
         Ok(value)
     }
 
-    fn parse_string_literal_and_load_single_file_clean(&mut self) -> Result<Value, &'static str> {
+    fn parse_string_literal_and_load_single_file_clean(&mut self) -> Result<Value, String> {
         let filename = self.parse_string_literal()?;
         println!("\x1b[2;34m##### Entering {filename}: \x1b[00m"); // faint blue
 
@@ -204,11 +213,16 @@ impl<'b> Parser<'b> {
         // Boot up the interpreter with the default environment
         // but keep track of the stack trace
         let mut new_stack_trace = self.stack_trace.clone();
-        new_stack_trace.push(filename.strip_suffix(".periodicode").unwrap_or(&filename).to_owned());
+        new_stack_trace.push(
+            filename
+                .strip_suffix(".periodicode")
+                .unwrap_or(&filename)
+                .to_owned(),
+        );
         let mut new_ctx = Interpreter::new(BigRational::zero(), 10, new_stack_trace);
 
         // Do not write back the radix context
-        let (value, _) = new_ctx.execute_lines(&content);
+        let (value, _) = new_ctx.execute_lines(&content)?;
 
         self.previous_value = value.clone();
 
@@ -217,7 +231,7 @@ impl<'b> Parser<'b> {
         Ok(value)
     }
 
-    fn parse_funccall_or_decorated_block(&mut self) -> Result<Value, &'static str> {
+    fn parse_funccall_or_decorated_block(&mut self) -> Result<Value, String> {
         self.trim_start();
         if let Some(buf_) = self.buf.strip_prefix('@') {
             self.buf = buf_.trim_start();
@@ -252,7 +266,9 @@ impl<'b> Parser<'b> {
                 if first_arg == second_arg {
                     Ok(first_arg) // @assert_eq(7*6, 42) returns 42
                 } else {
-                    panic!("ASSERTION FAILED: \nleft: {first_arg}\nright: {second_arg}",)
+                    Err(format!(
+                        "ASSERTION FAILED: \nleft: {first_arg}\nright: {second_arg}"
+                    ))
                 }
             } else if ident.0 == "set_radix" {
                 self.consume_char_or_err(
@@ -279,16 +295,16 @@ impl<'b> Parser<'b> {
 
                 Ok(BigRational::new(BigInt::from(radix), BigInt::one()))
             } else {
-                panic!("UNSUPPORTED FUNCTION: `@{}`", ident.0)
+                Err(format!("UNSUPPORTED IDENTIFIER found after `@`: `@{}`", ident.0))
             }
         } else {
             self.parse_primary_expression()
         }
     }
 
-    fn parse_block_expression<T>(&mut self, f: T) -> Result<Value, &'static str>
+    fn parse_block_expression<T>(&mut self, f: T) -> Result<Value, String>
     where
-        T: Fn(&mut Self) -> Result<Value, &'static str>,
+        T: Fn(&mut Self) -> Result<Value, String>,
     {
         self.trim_start();
         self.consume_char_or_err('{', "Expected the start of a block")?;
@@ -298,7 +314,7 @@ impl<'b> Parser<'b> {
         loop {
             match judge_termination_or_semicolons(self.buf, || ()) {
                 Judgement::EndOfLineEncountered => {
-                    panic!("Line is terminated but the block is unterminated")
+                    return Err(S("Line is terminated but the block is unterminated"))
                 }
                 Judgement::ExpressionTerminatedWithSemicolon(s) => self.buf = s,
                 Judgement::NoConsumption => {}
@@ -312,7 +328,7 @@ impl<'b> Parser<'b> {
                     return Ok(val);
                 }
                 Judgement::EndOfLineEncountered => {
-                    panic!("Line is terminated but the block is unterminated")
+                    return Err(S("Line is terminated but the block is unterminated"))
                 }
                 Judgement::ExpressionTerminatedWithSemicolon(s) => self.buf = s,
             }
@@ -324,7 +340,7 @@ impl<'b> Parser<'b> {
         }
     }
 
-    fn parse_primary_expression(&mut self) -> Result<Value, &'static str> {
+    fn parse_primary_expression(&mut self) -> Result<Value, String> {
         let buf = self.buf.trim_start();
         if buf.starts_with('{') {
             self.parse_block_expression(Self::parse_expression)
@@ -365,10 +381,12 @@ impl<'b> Parser<'b> {
                     .into_iter()
                     .rev()
                     .reduce(|acc, e| acc.recip() + e)
-                    .unwrap();
+                    .expect("This iterator is not supposed to be empty");
                 Ok(final_result)
             } else {
-                Err("Expected `]` or `;` after the first slot of a continued-fraction literal")
+                Err(S(
+                    "Expected `]` or `;` after the first slot of a continued-fraction literal",
+                ))
             }
         } else {
             let (value, remaining) =
@@ -378,14 +396,14 @@ impl<'b> Parser<'b> {
         }
     }
 
-    fn parse_identifier(&mut self) -> Result<Identifier, &'static str> {
-        static RE_IDENTIFIER: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9a-zA-Z_]+").unwrap());
+    fn parse_identifier(&mut self) -> Result<Identifier, String> {
+        static RE_IDENTIFIER: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[0-9a-zA-Z_]+").expect("regex compilation failed"));
 
         match RE_IDENTIFIER.captures(self.buf) {
-            None => Err("No identifier found after `@`"),
+            None => Err(S("No identifier found after `@`")),
             Some(u) => {
-                let whole = u.get(0).unwrap().as_str();
-                self.buf = self.buf.strip_prefix(whole).unwrap();
+                let whole = u.get(0).expect("regex match").as_str();
+                self.buf = self.buf.strip_prefix(whole).expect("regex match");
                 Ok(Identifier(String::from(whole)))
             }
         }

@@ -60,7 +60,7 @@ impl Interpreter {
         }
     }
 
-    fn execute_line(&mut self, input: &str) {
+    fn execute_line(&mut self, input: &str) -> Result<(), String> {
         let stack_trace_str = self.stack_trace.iter().fold(String::new(), |mut a, b| {
             a += "\x1b[0;34m"; /* normal blue */
             a += b;
@@ -81,7 +81,7 @@ impl Interpreter {
         );
 
         match judge_termination_or_semicolons(input.trim_start(), || ()) {
-            Judgement::EndOfLineEncountered => return,
+            Judgement::EndOfLineEncountered => return Ok(()),
             Judgement::ExpressionTerminatedWithSemicolon(s) => input = s.to_owned(),
             Judgement::NoConsumption => {}
         }
@@ -94,31 +94,37 @@ impl Interpreter {
                 &input,
             );
 
-            self.previous_value = p.parse_expression().unwrap();
+            self.previous_value = p.parse_expression()?;
             self.radix_context = p.get_radix_context();
             let remaining = p.get_buf().trim_start();
 
             match judge_termination_or_semicolons(remaining, || {
                 rational_print_summary(&self.previous_value, self.radix_context);
             }) {
-                Judgement::EndOfLineEncountered => return,
+                Judgement::EndOfLineEncountered => return Ok(()),
                 Judgement::ExpressionTerminatedWithSemicolon(s) => input = s.to_owned(),
-                Judgement::NoConsumption => panic!("cannot parse the remaining `{remaining}`"),
+                Judgement::NoConsumption => {
+                    return Err(format!("cannot parse the remaining `{remaining}`"))
+                }
             }
         }
     }
 
-    fn execute_lines(&mut self, input: &str) -> (BigRational, u32) {
+    fn execute_lines(&mut self, input: &str) -> Result<(BigRational, u32), String> {
         for line in input.lines() {
-            self.execute_line(line);
+            self.execute_line(line)?;
         }
-        (self.previous_value.clone(), self.radix_context)
+        Ok((self.previous_value.clone(), self.radix_context))
     }
 }
 
-fn main() {
+fn main() -> Result<(), String> {
     let mut ctx = Interpreter::new(BigRational::zero(), 10, vec![]);
-    ctx.execute_lines(r#"@load { "summary.periodicode" }"#);
+    ctx.execute_lines(
+        r#"@load { "summary.periodicode" };
+$_"#,
+    )?;
+    Ok(())
 }
 
 #[cfg(test)]
