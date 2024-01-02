@@ -16,23 +16,30 @@ struct Interpreter {
 }
 
 /// `f` is only run when the input has no trailing semicolon
-pub fn handle_empty_or_semicolon<T>(remaining: &str, f: T) -> Option<ControlFlow<(), &str>>
+/// multiple semicolons are collapsed
+pub fn handle_empty_or_semicolons<T>(remaining: &str, f: T) -> Option<ControlFlow<(), &str>>
 where
     T: Fn(),
 {
     if remaining.starts_with('#') || remaining.is_empty() {
-        /* line-comment; ignore */
         f();
-        return Some(ControlFlow::Break(()));
+        Some(ControlFlow::Break(()))
     } else if let Some(buf) = remaining.strip_prefix(';') {
-        let remaining = buf.trim_start();
+        let mut remaining = buf.trim_start();
+
+        while let Some(buf) = remaining.strip_prefix(';') {
+            remaining = buf.trim_start();
+        }
+
         if remaining.is_empty() || remaining.starts_with('#') {
             // The line ends with a semicolon; don't print anything
-            return Some(ControlFlow::Break(()));
+            Some(ControlFlow::Break(()))
+        } else {
+            Some(ControlFlow::Continue(remaining))
         }
-        return Some(ControlFlow::Continue(remaining));
+    } else {
+        None
     }
-    None
 }
 
 impl Interpreter {
@@ -56,7 +63,7 @@ impl Interpreter {
             input
         );
 
-        match handle_empty_or_semicolon(input.trim_start(), || ()) {
+        match handle_empty_or_semicolons(input.trim_start(), || ()) {
             Some(ControlFlow::Break(())) => return,
             Some(ControlFlow::Continue(s)) => input = s.to_owned(),
             _ => {}
@@ -69,7 +76,7 @@ impl Interpreter {
             self.radix_context = parser.get_radix_context();
             let remaining = parser.get_buf().trim_start();
 
-            match handle_empty_or_semicolon(remaining, || {
+            match handle_empty_or_semicolons(remaining, || {
                 rational_print_summary(&self.previous_value, self.radix_context);
             }) {
                 Some(ControlFlow::Break(())) => return,
