@@ -8,7 +8,7 @@ pub mod numeric_literal;
 
 type Value = BigRational;
 
-pub struct BareExpressionParser<'a> {
+pub struct Parser<'a> {
     radix_context: u32,
     previous_value: Value,
     buf: &'a str,
@@ -16,7 +16,7 @@ pub struct BareExpressionParser<'a> {
 
 struct Identifier(String);
 
-impl<'b> BareExpressionParser<'b> {
+impl<'b> Parser<'b> {
     pub fn get_buf(&self) -> &str {
         self.buf
     }

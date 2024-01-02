@@ -1,4 +1,4 @@
-use crate::parse_bare_expression::numeric_literal::parse_numeric_literal_with_radix_context;
+use crate::parse::numeric_literal::parse_numeric_literal_with_radix_context;
 use num_rational::BigRational;
 
 fn numeric_literal(input: &str) -> BigRational {
