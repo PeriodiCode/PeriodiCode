@@ -50,6 +50,43 @@ impl Interpreter {
         }
     }
 
+    /// The grammar that I want to express is as follows:
+    /// ```bnf
+    /// <line> ::= <statement>* <expression>? <line-comment>?
+    /// <statement> ::= <expression>? ";" | ("@" <radix-identifier>)? "{" <statement>* "}"
+    /// <expression> ::= <bare-expression> | ("@" <radix-identifier>)? "{" <statement>* <expression> "}"
+    /// ```
+    ///
+    /// Make it into a context-free grammar and we have
+    /// ```ebnf
+    /// L = L2 | L2 "#comment"
+    /// L2 = Ss | Ss E
+    /// Ss = ε | S Ss
+    /// S = ";" | E ";" | O Ss "}"
+    /// E = "bare-expr" | O Ss E "}"
+    /// O = "{" | "@radix{"
+    /// ```
+    /// 
+    /// Eliminating `S` gives
+    /// ```ebnf
+    /// L = L2 | L2 "#comment"
+    /// L2 = Ss | Ss E
+    /// Ss = ε | ";" Ss | E ";" Ss | O Ss "}" Ss
+    /// E = "bare-expr" | O Ss E "}"
+    /// O = "{" | "@radix{"
+    /// ```
+    /// 
+    /// This, in turn, can be made into a deterministic grammar:
+    /// ```ebnf
+    /// L2 = Ss | Ss E
+    /// Ss = ε | ";" Ss | "bare-expr" ";" Ss | O Ss R
+    /// E = "bare-expr" | O Ss E "}"
+    /// R = "bare-expr" "}" ";" 
+    ///   | O Ss E "}" "}" ";" 
+    ///   | "}"
+    /// ```
+    /// 
+    /// where R's semantics is "closing bracket that follows statements and creates statements"
     fn execute_line(&mut self, input: &str) {
         let mut input = input.to_owned();
         println!(

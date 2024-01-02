@@ -1,0 +1,18 @@
+L2 = Ss | Ss E
+Ss = ε | ";" Ss | E ";" Ss | "{" Ss "}" Ss
+E = "b" | "{" Ss E "}"
+----[Substitute E to the second line]----
+L2 = Ss | Ss E
+Ss = ε | ";" Ss | "b" ";" Ss | "{" Ss E "}" ";" Ss | "{" Ss "}" Ss
+E = "b" | "{" Ss E "}"
+----[Factor out R from the second line]--------------
+L2 = Ss | Ss E
+Ss = ε | ";" Ss | "b" ";" Ss | "{" Ss R Ss
+E = "b" | "{" Ss E "}"
+R = E "}" ";" | "}"
+----[Substitute E to the fourth line]----
+L2 = Ss | Ss E
+Ss = ε | ";" Ss | "b" ";" Ss | "{" Ss R
+E = "b" | "{" Ss E "}"
+R = "b" "}" ";" | "{" Ss E "}" "}" ";" | "}"
+----[Okay, this is deteministic]----
