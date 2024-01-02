@@ -15,6 +15,7 @@ type Value = BigRational;
 pub struct Parser<'a> {
     radix_context: u32,
     previous_value: Value,
+    stack_trace: Vec<String>,
     buf: &'a str,
 }
 
@@ -24,7 +25,12 @@ impl<'b> Parser<'b> {
     pub fn get_buf(&self) -> &str {
         self.buf
     }
-    pub fn new(radix_context: u32, previous_value: Value, buf: &'b str) -> Self {
+    pub fn new(
+        radix_context: u32,
+        previous_value: Value,
+        stack_trace: Vec<String>,
+        buf: &'b str,
+    ) -> Self {
         assert!(
             radix_context <= 25,
             "radix greater than 25 is not supported"
@@ -33,6 +39,7 @@ impl<'b> Parser<'b> {
         Self {
             radix_context,
             previous_value,
+            stack_trace,
             buf,
         }
     }
@@ -157,14 +164,22 @@ impl<'b> Parser<'b> {
 
     fn parse_string_literal_and_load_single_file_dirty(&mut self) -> Result<Value, &'static str> {
         let filename = self.parse_string_literal()?;
+        println!("\x1b[2;34m##### Start of {filename}: \x1b[00m"); // faint blue
 
-        let mut f = std::fs::File::open(filename).map_err(|_| "File not found")?;
+        let mut f = std::fs::File::open(filename.clone()).map_err(|_| "File not found")?;
         let mut content = String::new();
         f.read_to_string(&mut content)
             .map_err(|_| "something went wrong reading the file")?;
 
         // boot up the new interpreter, inheriting the environment
-        let mut new_ctx = Interpreter::new(self.previous_value.clone(), self.radix_context);
+        let mut new_stack_trace = self.stack_trace.clone();
+        new_stack_trace.push(filename.strip_suffix(".periodicode").unwrap_or(&filename).to_owned());
+
+        let mut new_ctx = Interpreter::new(
+            self.previous_value.clone(),
+            self.radix_context,
+            new_stack_trace,
+        );
         let (value, radix_context) = new_ctx.execute_lines(&content);
 
         self.previous_value = value.clone();
@@ -172,12 +187,14 @@ impl<'b> Parser<'b> {
         // write back the radix context
         self.radix_context = radix_context;
 
+        println!("\x1b[2;34m##### End of {filename}\x1b[00m"); // faint blue
+
         Ok(value)
     }
 
     fn parse_string_literal_and_load_single_file_clean(&mut self) -> Result<Value, &'static str> {
         let filename = self.parse_string_literal()?;
-        println!(" \x1b[2;32m# Entering {filename}: \x1b[00m"); // faint green
+        println!("\x1b[2;34m##### Entering {filename}: \x1b[00m"); // faint blue
 
         let mut f = std::fs::File::open(filename.clone()).map_err(|_| "File not found")?;
         let mut content = String::new();
@@ -185,14 +202,17 @@ impl<'b> Parser<'b> {
             .map_err(|_| "something went wrong reading the file")?;
 
         // Boot up the interpreter with the default environment
-        let mut new_ctx = Interpreter::new(BigRational::zero(), 10);
-        
+        // but keep track of the stack trace
+        let mut new_stack_trace = self.stack_trace.clone();
+        new_stack_trace.push(filename.strip_suffix(".periodicode").unwrap_or(&filename).to_owned());
+        let mut new_ctx = Interpreter::new(BigRational::zero(), 10, new_stack_trace);
+
         // Do not write back the radix context
         let (value, _) = new_ctx.execute_lines(&content);
 
         self.previous_value = value.clone();
 
-        println!(" \x1b[2;32m# Exiting {filename}: \x1b[00m"); // faint green
+        println!("\x1b[2;34m##### Exiting {filename}\x1b[00m"); // faint blue
 
         Ok(value)
     }

@@ -11,6 +11,7 @@ mod numerical_util;
 struct Interpreter {
     previous_value: BigRational,
     radix_context: u32,
+    stack_trace: Vec<String>,
 }
 
 enum Judgement<T> {
@@ -51,17 +52,24 @@ where
 }
 
 impl Interpreter {
-    fn new(previous_value: BigRational, radix_context: u32) -> Self {
+    fn new(previous_value: BigRational, radix_context: u32, stack_trace: Vec<String>) -> Self {
         Self {
             previous_value,
             radix_context,
+            stack_trace,
         }
     }
 
     fn execute_line(&mut self, input: &str) {
+        let stack_trace_str = self
+            .stack_trace
+            .iter()
+            .map(|s| format!("\x1b[0;34m{}\x1b[00m:", s)) /* normal blue */
+            .collect::<String>();
+
         let mut input = input.to_owned();
         println!(
-            "\x1b[1;34mPeriodiCode\x1b[00m:\x1b[{};32mbase-{:<2}\x1b[00m> {}",
+            "\x1b[1;34mPeriodiCode\x1b[00m:{stack_trace_str}\x1b[{};32mbase-{:<2}\x1b[00m> {}",
             if self.radix_context == 10 {
                 "0" /* normal */
             } else {
@@ -78,7 +86,12 @@ impl Interpreter {
         }
 
         loop {
-            let mut p = Parser::new(self.radix_context, self.previous_value.clone(), &input);
+            let mut p = Parser::new(
+                self.radix_context,
+                self.previous_value.clone(),
+                self.stack_trace.clone(),
+                &input,
+            );
 
             self.previous_value = p.parse_expression().unwrap();
             self.radix_context = p.get_radix_context();
@@ -103,7 +116,7 @@ impl Interpreter {
 }
 
 fn main() {
-    let mut ctx = Interpreter::new(BigRational::zero(), 10);
+    let mut ctx = Interpreter::new(BigRational::zero(), 10, vec![]);
     ctx.execute_lines(include_str!("../summary.periodicode"));
 }
 
