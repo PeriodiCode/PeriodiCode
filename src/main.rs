@@ -17,22 +17,27 @@ struct Interpreter {
 
 /// `f` is only run when the input has no trailing semicolon
 /// multiple semicolons are collapsed
-pub fn handle_empty_or_semicolons<T>(remaining: &str, f: T) -> Option<ControlFlow<(), &str>>
+/// 
+/// `Some(Break(()))` is returned when the line is terminated
+/// `Some(Continue(remaining))` is returned when the preceding expression is terminated by a semicolon but the buffer still contains content
+/// `None` is returned when the buffer neither is empty nor begins with a semicolon
+pub fn handle_empty_or_semicolons<T>(buf: &str, f: T) -> Option<ControlFlow<(), &str>>
 where
     T: Fn(),
 {
-    if remaining.starts_with('#') || remaining.is_empty() {
+    if buf.starts_with('#') || buf.is_empty() {
+        // No trailing semicolon
         f();
         Some(ControlFlow::Break(()))
-    } else if let Some(buf) = remaining.strip_prefix(';') {
-        let mut remaining = buf.trim_start();
+    } else if let Some(buf) = buf.strip_prefix(';') {
 
+        // collapse multiple semicolons
+        let mut remaining = buf.trim_start();
         while let Some(buf) = remaining.strip_prefix(';') {
             remaining = buf.trim_start();
         }
 
         if remaining.is_empty() || remaining.starts_with('#') {
-            // The line ends with a semicolon; don't print anything
             Some(ControlFlow::Break(()))
         } else {
             Some(ControlFlow::Continue(remaining))
@@ -50,43 +55,6 @@ impl Interpreter {
         }
     }
 
-    /// The grammar that I want to express is as follows:
-    /// ```bnf
-    /// <line> ::= <statement>* <expression>? <line-comment>?
-    /// <statement> ::= <expression>? ";" | ("@" <radix-identifier>)? "{" <statement>* "}"
-    /// <expression> ::= <bare-expression> | ("@" <radix-identifier>)? "{" <statement>* <expression> "}"
-    /// ```
-    ///
-    /// Make it into a context-free grammar and we have
-    /// ```ebnf
-    /// L = L2 | L2 "#comment"
-    /// L2 = Ss | Ss E
-    /// Ss = ε | S Ss
-    /// S = ";" | E ";" | O Ss "}"
-    /// E = "bare-expr" | O Ss E "}"
-    /// O = "{" | "@radix{"
-    /// ```
-    /// 
-    /// Eliminating `S` gives
-    /// ```ebnf
-    /// L = L2 | L2 "#comment"
-    /// L2 = Ss | Ss E
-    /// Ss = ε | ";" Ss | E ";" Ss | O Ss "}" Ss
-    /// E = "bare-expr" | O Ss E "}"
-    /// O = "{" | "@radix{"
-    /// ```
-    /// 
-    /// This, in turn, can be made into a deterministic grammar:
-    /// ```ebnf
-    /// L2 = Ss | Ss E
-    /// Ss = ε | ";" Ss | "bare-expr" ";" Ss | O Ss R
-    /// E = "bare-expr" | O Ss E "}"
-    /// R = "bare-expr" "}" ";" 
-    ///   | O Ss E "}" "}" ";" 
-    ///   | "}"
-    /// ```
-    /// 
-    /// where R's semantics is "closing bracket that follows statements and creates statements"
     fn execute_line(&mut self, input: &str) {
         let mut input = input.to_owned();
         println!(
