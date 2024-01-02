@@ -94,7 +94,7 @@ impl<'b> Parser<'b> {
             let value = self.parse_unary_expression()?;
             Ok(-value)
         } else {
-            self.funccall_or_decorated_block()
+            self.parse_funccall_or_decorated_block()
         }
     }
 
@@ -112,7 +112,7 @@ impl<'b> Parser<'b> {
         self.buf = self.buf.trim_start();
     }
 
-    fn funccall_or_decorated_block(&mut self) -> Result<Value, &'static str> {
+    fn parse_funccall_or_decorated_block(&mut self) -> Result<Value, &'static str> {
         self.trim_start();
         if let Some(buf_) = self.buf.strip_prefix('@') {
             self.buf = buf_.trim_start();

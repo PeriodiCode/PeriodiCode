@@ -167,7 +167,7 @@ beef / a
 # Chapter 4. Blocks
 ##################################################
 
-# The block is always an expression; it has a value and can become an operand.
+# A block is always an expression; it has a value and can become an operand.
 {3; 4} + 7
 @assert_eq($_, 11);
 
