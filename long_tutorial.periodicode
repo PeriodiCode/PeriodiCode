@@ -206,18 +206,18 @@ beef / a
 # and the content of the file is executed in a new interpreter.
 # Even though string literals don't exist as a value in PeriodiCode,
 # they can nevertheless appear in a decorated block.
-@load { "one_zero.periodicode" }
+@load { "snippet/one_zero.periodicode" }
 @assert_eq($_, 10);
 
 # "@load" always start a new interpreter with $_ set to 0 and radix set to decimal.
-@load { "dollar_underscore.periodicode" }; @assert_eq($_, 0)
-@hexadecimal { @load { "one_zero.periodicode" }; @assert_eq($_, 2 * 5) }
+@load { "snippet/dollar_underscore.periodicode" }; @assert_eq($_, 0)
+@hexadecimal { @load { "snippet/one_zero.periodicode" }; @assert_eq($_, 2 * 5) }
 
 # "@load_dirty" directive takes string literals,
 # and REPLACES the string literals with the content of the file.
 # It inherits the $_ and radix_context of the outer environment.
-@hexadecimal { @load_dirty { "one_zero.periodicode" }; @assert_eq($_, 4 * 4) }
-@load_dirty { "set_radix_to_oct.periodicode" }; @assert_eq(100, 4 * 4 * 4) # here, 100 is octal  
+@hexadecimal { @load_dirty { "snippet/one_zero.periodicode" }; @assert_eq($_, 4 * 4) }
+@load_dirty { "snippet/set_radix_to_oct.periodicode" }; @assert_eq(100, 4 * 4 * 4) # here, 100 is octal  
 @set_radix(@decimal)
 
 ##################################################

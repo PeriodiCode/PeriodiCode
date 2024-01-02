@@ -36,5 +36,5 @@ $_ + 2
 @set_radix(@hexadecimal);
 beef; @assert_eq($_, 0d48879);
 
-# you can load the content of another file
-@load { "example.periodicode" }
+# you can load other files
+@load { "literal.periodicode"; "long_tutorial.periodicode" }

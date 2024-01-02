@@ -1,3 +1,9 @@
+#################################################
+# FUTURE
+# This file is for stockpiling ideas
+# that might be supported in the future version.
+#################################################
+
 # "@should_throw" directive also takes string literals.
 # It evaluates the content of the string literals
 # and returns the index (0-index) of the first string literal to throw an error.

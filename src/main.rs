@@ -104,7 +104,7 @@ impl Interpreter {
 
 fn main() {
     let mut ctx = Interpreter::new(BigRational::zero(), 10);
-    ctx.execute_lines(include_str!("../long_tutorial.periodicode"));
+    ctx.execute_lines(include_str!("../summary.periodicode"));
 }
 
 #[cfg(test)]
