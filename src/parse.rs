@@ -1,6 +1,6 @@
 use num_bigint::BigInt;
 use num_rational::BigRational;
-use num_traits::{One, Zero};
+use num_traits::One;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -20,25 +20,21 @@ impl<'b> Parser<'b> {
     pub fn get_buf(&self) -> &str {
         self.buf
     }
-    pub fn new(buf: &'b str) -> Self {
+    pub fn new(radix_context: u32, previous_value: Value, buf: &'b str) -> Self {
+        assert!(
+            radix_context <= 25,
+            "radix greater than 25 is not supported"
+        );
+
         Self {
-            radix_context: 10,
-            previous_value: BigRational::zero(),
+            radix_context,
+            previous_value,
             buf,
         }
     }
 
     pub fn get_radix_context(&mut self) -> u32 {
         self.radix_context
-    }
-
-    pub fn set_radix_context(&mut self, new: u32) {
-        assert!(new <= 25, "radix greater than 25 is not supported");
-        self.radix_context = new;
-    }
-
-    pub fn set_previous_value(&mut self, previous_value: Value) {
-        self.previous_value = previous_value;
     }
 
     pub fn parse_expression(&mut self) -> Result<Value, &'static str> {

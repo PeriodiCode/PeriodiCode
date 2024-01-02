@@ -62,18 +62,12 @@ impl Interpreter {
             _ => {}
         }
 
-        let mut ans;
         loop {
-            let mut parser = Parser::new(&input);
-            parser.set_radix_context(self.radix_context);
-            parser.set_previous_value(self.previous_value.clone());
+            let mut parser = Parser::new(self.radix_context, self.previous_value.clone(), &input);
 
-            ans = parser.parse_expression().unwrap();
+            self.previous_value = parser.parse_expression().unwrap();
             self.radix_context = parser.get_radix_context();
             let remaining = parser.get_buf().trim_start();
-
-            // Set the result of the final expression to `$_`
-            self.previous_value = ans;
 
             match Self::handle_empty_or_semicolon(remaining, || {
                 rational_print_summary(&self.previous_value, self.radix_context);
