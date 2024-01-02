@@ -164,10 +164,15 @@ beef / a
 @assert_eq($_, 111/11);
 
 ##################################################
-# Chapter 4. Blocks
+# Chapter 4. Undecorated and Decorated Blocks
+# A block is always an expression
 ##################################################
 
-# A block is always an expression; it has a value and can become an operand.
+#---------------------------------------------------
+# 4-1. Undecorated blocks
+# A block has a value and can become an operand.
+#---------------------------------------------------
+
 {3; 4} + 7
 @assert_eq($_, 11);
 
@@ -185,12 +190,35 @@ beef / a
 # { ; }
 # {  ;  ;  }
 
+
+#---------------------------------------------------
+# 4-2. Decorated blocks
 # A block can be "decorated":
 # Inside a decorated block, the semantics change
+#---------------------------------------------------
+
 # As shown above, local radix-context is introduced using a decorated block;
 # thus you can put semicolons inside such blocks
 @hexadecimal {;;; 1; .r1;;;; } + 2
 @assert_eq($_, 1/15 + 2);
+
+# "@load" directive takes string literals,
+# and the content of the file is executed in a new interpreter.
+# Even though string literals don't exist as a value in PeriodiCode,
+# they can nevertheless appear in a decorated block.
+@load { "one_zero.periodicode" }
+@assert_eq($_, 10);
+
+# "@load" always start a new interpreter with $_ set to 0 and radix set to decimal.
+@load { "dollar_underscore.periodicode" }; @assert_eq($_, 0)
+@hexadecimal { @load { "one_zero.periodicode" }; @assert_eq($_, 2 * 5) }
+
+# "@load_dirty" directive takes string literals,
+# and REPLACES the string literals with the content of the file.
+# It inherits the $_ and radix_context of the outer environment.
+@hexadecimal { @load_dirty { "one_zero.periodicode" }; @assert_eq($_, 4 * 4) }
+@load_dirty { "set_radix_to_oct.periodicode" }; @assert_eq(100, 4 * 4 * 4) # here, 100 is octal  
+@set_radix(@decimal)
 
 ##################################################
 # Chapter 5. Continued Fraction

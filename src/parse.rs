@@ -1,10 +1,12 @@
+use std::io::Read;
+
 use num_bigint::BigInt;
 use num_rational::BigRational;
-use num_traits::One;
+use num_traits::{One, Zero};
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-use crate::{judge_termination_or_semicolons, Judgement};
+use crate::{judge_termination_or_semicolons, Interpreter, Judgement};
 
 pub mod numeric_literal;
 
@@ -112,6 +114,89 @@ impl<'b> Parser<'b> {
         self.buf = self.buf.trim_start();
     }
 
+    fn parse_string_literal(&mut self) -> Result<String, &'static str> {
+        self.trim_start();
+        let mut s = String::new();
+        if let Some(buf_) = self.buf.strip_prefix('"') {
+            let mut char_indices = buf_.char_indices();
+            let closing_quote_index = loop {
+                match char_indices.next() {
+                    Some((i, '"')) => {
+                        break i;
+                    }
+                    Some((_, '\\')) => match char_indices.next() {
+                        Some((_, 'n')) => {
+                            s.push('\n');
+                        }
+                        Some((_, '"')) => {
+                            s.push('\"');
+                        }
+                        Some((_, '\'')) => {
+                            s.push('\'');
+                        }
+                        Some((_, '\\')) => {
+                            s.push('\\');
+                        }
+                        None => return Err("Unterminated escape sequence inside a string literal"),
+                        Some((_, _)) => {
+                            return Err("Unsupported escape sequence inside a string literal")
+                        }
+                    },
+                    Some((_, c)) => s.push(c),
+                    None => return Err("Unterminated string literal"),
+                }
+            };
+
+            self.buf = &buf_[(closing_quote_index + 1)..];
+
+            Ok(s)
+        } else {
+            Err("Not a string literal")
+        }
+    }
+
+    fn parse_string_literal_and_load_single_file_dirty(&mut self) -> Result<Value, &'static str> {
+        let filename = self.parse_string_literal()?;
+
+        let mut f = std::fs::File::open(filename).map_err(|_| "File not found")?;
+        let mut content = String::new();
+        f.read_to_string(&mut content)
+            .map_err(|_| "something went wrong reading the file")?;
+
+        // boot up the new interpreter, inheriting the environment
+        let mut new_ctx = Interpreter::new(self.previous_value.clone(), self.radix_context);
+        let (value, radix_context) = new_ctx.execute_lines(&content);
+
+        self.previous_value = value.clone();
+
+        // write back the radix context
+        self.radix_context = radix_context;
+
+        Ok(value)
+    }
+
+    fn parse_string_literal_and_load_single_file_clean(&mut self) -> Result<Value, &'static str> {
+        let filename = self.parse_string_literal()?;
+        println!(" \x1b[2;32m# Entering {filename}: \x1b[00m"); // faint green
+
+        let mut f = std::fs::File::open(filename.clone()).map_err(|_| "File not found")?;
+        let mut content = String::new();
+        f.read_to_string(&mut content)
+            .map_err(|_| "something went wrong reading the file")?;
+
+        // Boot up the interpreter with the default environment
+        let mut new_ctx = Interpreter::new(BigRational::zero(), 10);
+        
+        // Do not write back the radix context
+        let (value, _) = new_ctx.execute_lines(&content);
+
+        self.previous_value = value.clone();
+
+        println!(" \x1b[2;32m# Exiting {filename}: \x1b[00m"); // faint green
+
+        Ok(value)
+    }
+
     fn parse_funccall_or_decorated_block(&mut self) -> Result<Value, &'static str> {
         self.trim_start();
         if let Some(buf_) = self.buf.strip_prefix('@') {
@@ -120,9 +205,13 @@ impl<'b> Parser<'b> {
             if let Some(new_radix_content) = ident.to_radix() {
                 let stashed_radix_content = self.radix_context;
                 self.radix_context = new_radix_content;
-                let val = self.parse_block_expression()?;
+                let val = self.parse_block_expression(Self::parse_expression)?;
                 self.radix_context = stashed_radix_content;
                 Ok(val)
+            } else if ident.0 == "load_dirty" {
+                self.parse_block_expression(Self::parse_string_literal_and_load_single_file_dirty)
+            } else if ident.0 == "load" {
+                self.parse_block_expression(Self::parse_string_literal_and_load_single_file_clean)
             } else if ident.0 == "assert_eq" {
                 self.consume_char_or_err(
                     '(',
@@ -177,7 +266,10 @@ impl<'b> Parser<'b> {
         }
     }
 
-    fn parse_block_expression(&mut self) -> Result<Value, &'static str> {
+    fn parse_block_expression<T>(&mut self, f: T) -> Result<Value, &'static str>
+    where
+        T: Fn(&mut Self) -> Result<Value, &'static str>,
+    {
         self.trim_start();
         self.consume_char_or_err('{', "Expected the start of a block")?;
 
@@ -189,10 +281,10 @@ impl<'b> Parser<'b> {
                     panic!("Line is terminated but the block is unterminated")
                 }
                 Judgement::ExpressionTerminatedWithSemicolon(s) => self.buf = s,
-                Judgement::NoConsumption => {},
+                Judgement::NoConsumption => {}
             }
 
-            let val = self.parse_expression()?;
+            let val = f(self)?;
             self.trim_start();
             match judge_termination_or_semicolons(self.buf, || ()) {
                 Judgement::NoConsumption => {
@@ -215,7 +307,7 @@ impl<'b> Parser<'b> {
     fn parse_primary_expression(&mut self) -> Result<Value, &'static str> {
         let buf = self.buf.trim_start();
         if buf.starts_with('{') {
-            self.parse_block_expression()
+            self.parse_block_expression(Self::parse_expression)
         } else if let Some(buf) = buf.strip_prefix("$_") {
             self.buf = buf;
             Ok(self.previous_value.clone())

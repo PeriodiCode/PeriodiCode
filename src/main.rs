@@ -51,10 +51,10 @@ where
 }
 
 impl Interpreter {
-    fn new() -> Self {
+    fn new(previous_value: BigRational, radix_context: u32) -> Self {
         Self {
-            previous_value: BigRational::zero(),
-            radix_context: 10,
+            previous_value,
+            radix_context,
         }
     }
 
@@ -94,15 +94,16 @@ impl Interpreter {
         }
     }
 
-    fn execute_lines(&mut self, input: &str) {
+    fn execute_lines(&mut self, input: &str) -> (BigRational, u32) {
         for line in input.lines() {
             self.execute_line(line);
         }
+        (self.previous_value.clone(), self.radix_context)
     }
 }
 
 fn main() {
-    let mut ctx = Interpreter::new();
+    let mut ctx = Interpreter::new(BigRational::zero(), 10);
     ctx.execute_lines(include_str!("../example.periodicode"));
 }
 
