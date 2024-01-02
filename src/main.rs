@@ -15,32 +15,32 @@ struct Interpreter {
     radix_context: u32,
 }
 
+/// `f` is only run when the input has no trailing semicolon
+pub fn handle_empty_or_semicolon<T>(remaining: &str, f: T) -> Option<ControlFlow<(), &str>>
+where
+    T: Fn(),
+{
+    if remaining.starts_with('#') || remaining.is_empty() {
+        /* line-comment; ignore */
+        f();
+        return Some(ControlFlow::Break(()));
+    } else if let Some(buf) = remaining.strip_prefix(';') {
+        let remaining = buf.trim_start();
+        if remaining.is_empty() || remaining.starts_with('#') {
+            // The line ends with a semicolon; don't print anything
+            return Some(ControlFlow::Break(()));
+        }
+        return Some(ControlFlow::Continue(remaining));
+    }
+    None
+}
+
 impl Interpreter {
     fn new() -> Self {
         Self {
             previous_value: BigRational::zero(),
             radix_context: 10,
         }
-    }
-
-    // `f` is only run when the input has no trailing semicolon
-    fn handle_empty_or_semicolon<T>(remaining: &str, f: T) -> Option<ControlFlow<(), String>>
-    where
-        T: Fn(),
-    {
-        if remaining.starts_with('#') || remaining.is_empty() {
-            /* line-comment; ignore */
-            f();
-            return Some(ControlFlow::Break(()));
-        } else if remaining.starts_with(';') {
-            let remaining = remaining.strip_prefix(';').unwrap().trim_start();
-            if remaining.is_empty() || remaining.starts_with('#') {
-                // The line ends with a semicolon; don't print anything
-                return Some(ControlFlow::Break(()));
-            }
-            return Some(ControlFlow::Continue(remaining.to_owned()));
-        }
-        None
     }
 
     fn execute_line(&mut self, input: &str) {
@@ -56,9 +56,9 @@ impl Interpreter {
             input
         );
 
-        match Self::handle_empty_or_semicolon(input.trim_start(), || ()) {
+        match handle_empty_or_semicolon(input.trim_start(), || ()) {
             Some(ControlFlow::Break(())) => return,
-            Some(ControlFlow::Continue(s)) => input = s,
+            Some(ControlFlow::Continue(s)) => input = s.to_owned(),
             _ => {}
         }
 
@@ -69,11 +69,11 @@ impl Interpreter {
             self.radix_context = parser.get_radix_context();
             let remaining = parser.get_buf().trim_start();
 
-            match Self::handle_empty_or_semicolon(remaining, || {
+            match handle_empty_or_semicolon(remaining, || {
                 rational_print_summary(&self.previous_value, self.radix_context);
             }) {
                 Some(ControlFlow::Break(())) => return,
-                Some(ControlFlow::Continue(s)) => input = s,
+                Some(ControlFlow::Continue(s)) => input = s.to_owned(),
                 None => panic!("cannot parse the remaining `{remaining}`"),
             }
         }
