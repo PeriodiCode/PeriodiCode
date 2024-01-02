@@ -1,0 +1,19 @@
+# A block can be "decorated":
+# Inside a decorated block, the semantics change
+@hexadecimal { 1; .r1 } + 2
+@assert_eq($_, 1/15 + 2);
+
+# Notable examples of a decorated block
+
+# "@load" directive takes string literals,
+# and replaces the string literals with the content of the file
+# Even though string literals don't exist as a value in PeriodiCode,
+# they can nevertheless appear in a decorated block
+@load { "example.periodicode"; "example2.periodicode" }
+
+# "@should_throw" directive also takes string literals.
+# It evaluates the content of the string literals
+# and returns the index (0-index) of the first string literal to throw an error.
+# It throws whenever the content does not throw.
+@should_throw { "1+2"; "@set_radix(@decimal); beef" }
+@assert_eq($_, 1);

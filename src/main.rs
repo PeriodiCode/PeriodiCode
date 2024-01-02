@@ -1,7 +1,5 @@
 #![warn(clippy::pedantic)]
 
-use std::ops::ControlFlow;
-
 use num_rational::BigRational;
 use num_traits::Zero;
 use parse::Parser;
@@ -15,30 +13,40 @@ struct Interpreter {
     radix_context: u32,
 }
 
+enum Judgement<T> {
+    EndOfLineEncountered,
+    ExpressionTerminatedWithSemicolon(T),
+    NoConsumption,
+}
+
 /// `f` is only run when the input has no trailing semicolon
 /// multiple semicolons are collapsed
-pub fn handle_empty_or_semicolons<T>(remaining: &str, f: T) -> Option<ControlFlow<(), &str>>
+///
+/// `Judgement::EndOfLineEncountered` is returned when the line is terminated
+/// `Judgement::ExpressionTerminatedWithSemicolon(new_buf)` is returned when the preceding expression is terminated by a semicolon but the buffer still contains content
+/// `Judgement::NoConsumption` is returned when the buffer neither is empty nor begins with a semicolon
+fn judge_termination_or_semicolons<T>(buf: &str, f: T) -> Judgement<&str>
 where
     T: Fn(),
 {
-    if remaining.starts_with('#') || remaining.is_empty() {
+    if buf.starts_with('#') || buf.is_empty() {
+        // No trailing semicolon
         f();
-        Some(ControlFlow::Break(()))
-    } else if let Some(buf) = remaining.strip_prefix(';') {
+        Judgement::EndOfLineEncountered
+    } else if let Some(buf) = buf.strip_prefix(';') {
+        // collapse multiple semicolons
         let mut remaining = buf.trim_start();
-
         while let Some(buf) = remaining.strip_prefix(';') {
             remaining = buf.trim_start();
         }
 
         if remaining.is_empty() || remaining.starts_with('#') {
-            // The line ends with a semicolon; don't print anything
-            Some(ControlFlow::Break(()))
+            Judgement::EndOfLineEncountered
         } else {
-            Some(ControlFlow::Continue(remaining))
+            Judgement::ExpressionTerminatedWithSemicolon(remaining)
         }
     } else {
-        None
+        Judgement::NoConsumption
     }
 }
 
@@ -63,25 +71,25 @@ impl Interpreter {
             input
         );
 
-        match handle_empty_or_semicolons(input.trim_start(), || ()) {
-            Some(ControlFlow::Break(())) => return,
-            Some(ControlFlow::Continue(s)) => input = s.to_owned(),
-            _ => {}
+        match judge_termination_or_semicolons(input.trim_start(), || ()) {
+            Judgement::EndOfLineEncountered => return,
+            Judgement::ExpressionTerminatedWithSemicolon(s) => input = s.to_owned(),
+            Judgement::NoConsumption => {}
         }
 
         loop {
-            let mut parser = Parser::new(self.radix_context, self.previous_value.clone(), &input);
+            let mut p = Parser::new(self.radix_context, self.previous_value.clone(), &input);
 
-            self.previous_value = parser.parse_expression().unwrap();
-            self.radix_context = parser.get_radix_context();
-            let remaining = parser.get_buf().trim_start();
+            self.previous_value = p.parse_expression().unwrap();
+            self.radix_context = p.get_radix_context();
+            let remaining = p.get_buf().trim_start();
 
-            match handle_empty_or_semicolons(remaining, || {
+            match judge_termination_or_semicolons(remaining, || {
                 rational_print_summary(&self.previous_value, self.radix_context);
             }) {
-                Some(ControlFlow::Break(())) => return,
-                Some(ControlFlow::Continue(s)) => input = s.to_owned(),
-                None => panic!("cannot parse the remaining `{remaining}`"),
+                Judgement::EndOfLineEncountered => return,
+                Judgement::ExpressionTerminatedWithSemicolon(s) => input = s.to_owned(),
+                Judgement::NoConsumption => panic!("cannot parse the remaining `{remaining}`"),
             }
         }
     }

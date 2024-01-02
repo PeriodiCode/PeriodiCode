@@ -159,9 +159,41 @@ beef / a
 @set_radix(@decimal)
 @assert_eq(4 * 4, 16);
 
+# You can also introduce local radix-contexts:
+@senary { .r0313452421 } + @binary { 1010 }
+@assert_eq($_, 111/11);
 
 ##################################################
-# Chapter 4. Continued Fraction
+# Chapter 4. Blocks
+##################################################
+
+# A block is always an expression; it has a value and can become an operand.
+{3; 4} + 7
+@assert_eq($_, 11);
+
+# Even when the content of a block is terminated by a semicolon,
+# the block is still treated as an expression.
+{3; 4;} + 7
+@assert_eq($_, 11);
+
+# The block can begin and end with as many semicolons as you want.
+{;;;;;;3; 4;;;;;} + 7
+@assert_eq($_, 11);
+
+# However, it is an error to write a block containing no expression.
+# {}
+# { ; }
+# {  ;  ;  }
+
+# A block can be "decorated":
+# Inside a decorated block, the semantics change
+# As shown above, local radix-context is introduced using a decorated block;
+# thus you can put semicolons inside such blocks
+@hexadecimal {;;; 1; .r1;;;; } + 2
+@assert_eq($_, 1/15 + 2);
+
+##################################################
+# Chapter 5. Continued Fraction
 ##################################################
 
 # You can write continued fraction with the standard syntax
