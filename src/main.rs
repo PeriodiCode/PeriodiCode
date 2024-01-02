@@ -4,7 +4,7 @@ use std::ops::ControlFlow;
 
 use num_rational::BigRational;
 use num_traits::Zero;
-use parse::Parser;
+use parse_bare_expression::BareExpressionParser;
 
 use crate::print::rational_print_summary;
 
@@ -107,11 +107,11 @@ impl Interpreter {
         }
 
         loop {
-            let mut parser = Parser::new(self.radix_context, self.previous_value.clone(), &input);
+            let mut p = BareExpressionParser::new(self.radix_context, self.previous_value.clone(), &input);
 
-            self.previous_value = parser.parse_expression().unwrap();
-            self.radix_context = parser.get_radix_context();
-            let remaining = parser.get_buf().trim_start();
+            self.previous_value = p.parse_bare_expression().unwrap();
+            self.radix_context = p.get_radix_context();
+            let remaining = p.get_buf().trim_start();
 
             match handle_empty_or_semicolons(remaining, || {
                 rational_print_summary(&self.previous_value, self.radix_context);
@@ -140,4 +140,4 @@ mod test;
 
 mod print;
 
-mod parse;
+mod parse_bare_expression;

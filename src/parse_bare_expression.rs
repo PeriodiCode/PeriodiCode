@@ -8,7 +8,7 @@ pub mod numeric_literal;
 
 type Value = BigRational;
 
-pub struct Parser<'a> {
+pub struct BareExpressionParser<'a> {
     radix_context: u32,
     previous_value: Value,
     buf: &'a str,
@@ -16,7 +16,7 @@ pub struct Parser<'a> {
 
 struct Identifier(String);
 
-impl<'b> Parser<'b> {
+impl<'b> BareExpressionParser<'b> {
     pub fn get_buf(&self) -> &str {
         self.buf
     }
@@ -37,7 +37,7 @@ impl<'b> Parser<'b> {
         self.radix_context
     }
 
-    pub fn parse_expression(&mut self) -> Result<Value, &'static str> {
+    pub fn parse_bare_expression(&mut self) -> Result<Value, &'static str> {
         self.trim_start();
         self.parse_additive_expression()
     }
@@ -121,12 +121,12 @@ impl<'b> Parser<'b> {
                     "No parenthesis after the built-in function `assert_eq`",
                 )?;
 
-                let first_arg = self.parse_expression()?;
+                let first_arg = self.parse_bare_expression()?;
                 self.consume_char_or_err(
                     ',',
                     "The built-in function `assert_eq` expects exactly two arguments",
                 )?;
-                let second_arg = self.parse_expression()?;
+                let second_arg = self.parse_bare_expression()?;
                 self.consume_char_or_err(
                     ')',
                     "The built-in function `assert_eq` expects exactly two arguments",
@@ -186,12 +186,12 @@ impl<'b> Parser<'b> {
             Ok(self.previous_value.clone())
         } else if let Some(buf_) = buf.strip_prefix('(') {
             self.buf = buf_;
-            let value = self.parse_expression()?;
+            let value = self.parse_bare_expression()?;
             self.consume_char_or_err(')', "Mismatched parenthesis")?;
             Ok(value)
         } else if let Some(buf_) = buf.strip_prefix('[') {
             self.buf = buf_;
-            let first_value = self.parse_expression()?;
+            let first_value = self.parse_bare_expression()?;
             let buf = self.buf.trim_start();
             if let Some(buf_) = buf.strip_prefix(']') {
                 self.buf = buf_;
@@ -202,7 +202,7 @@ impl<'b> Parser<'b> {
                 // what follows is (<value> <comma>)* <value> <]>
                 let mut values = vec![first_value];
                 loop {
-                    let val = self.parse_expression()?;
+                    let val = self.parse_bare_expression()?;
                     values.push(val);
                     let buf = self.buf.trim_start();
                     if let Some(buf_) = buf.strip_prefix(',') {
