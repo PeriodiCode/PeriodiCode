@@ -236,13 +236,13 @@ beef / a
 # Chapter 6. Errors and failures
 ##################################################
 
-# You can also test for failure using `@should_fail`.
+# You can also test for failures using `@should_fail`.
 # Here are some simple examples:
-@should_fail("."); # a standalone dot is forbidden
-@should_fail("*"); # standalone operator should not work
-@should_fail("@set_radix(@decimal); 100; beef"); # decimal does not have a 'b' as its digit
+@should_fail("."); # A standalone dot is forbidden
+@should_fail("*"); # A standalone operator should not work
+@should_fail("@set_radix(@decimal); 100; beef"); # 'b' is not a digit in the decimal context
 
-# By the way, $_ is the result of the final computation before failure
+# By the way, $_ is the result of the final computation before a failure
 @assert_eq($_, 4 * 5 * 5);
 
 # To give another example:
