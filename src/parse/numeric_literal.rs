@@ -16,26 +16,26 @@ fn bigint_from_possibly_empty_str_radix(str: &str, radix: u32) -> Result<BigInt,
 }
 
 fn strip_radix_prefix(input: &str) -> (&str, Option<u32>) {
-    if input.starts_with("0v") {
-        (input.strip_prefix("0v").unwrap(), Some(20))
-    } else if input.starts_with("0x") {
-        (input.strip_prefix("0x").unwrap(), Some(16))
-    } else if input.starts_with("0z") {
-        (input.strip_prefix("0z").unwrap(), Some(12))
-    } else if input.starts_with("0d") {
-        (input.strip_prefix("0d").unwrap(), Some(10))
-    } else if input.starts_with("0o") {
-        (input.strip_prefix("0o").unwrap(), Some(8))
-    } else if input.starts_with("0s") {
-        (input.strip_prefix("0s").unwrap(), Some(6))
-    } else if input.starts_with("0qn") {
-        (input.strip_prefix("0qn").unwrap(), Some(5))
-    } else if input.starts_with("0qt") {
-        (input.strip_prefix("0qt").unwrap(), Some(4))
-    } else if input.starts_with("0t") {
-        (input.strip_prefix("0t").unwrap(), Some(3))
-    } else if input.starts_with("0b") {
-        (input.strip_prefix("0b").unwrap(), Some(2))
+    if let Some(buf) = input.strip_prefix("0v") {
+        (buf, Some(20))
+    } else if let Some(buf) = input.strip_prefix("0x") {
+        (buf, Some(16))
+    } else if let Some(buf) = input.strip_prefix("0z") {
+        (buf, Some(12))
+    } else if let Some(buf) = input.strip_prefix("0d") {
+        (buf, Some(10))
+    } else if let Some(buf) = input.strip_prefix("0o") {
+        (buf, Some(8))
+    } else if let Some(buf) = input.strip_prefix("0s") {
+        (buf, Some(6))
+    } else if let Some(buf) = input.strip_prefix("0qn") {
+        (buf, Some(5))
+    } else if let Some(buf) = input.strip_prefix("0qt") {
+        (buf, Some(4))
+    } else if let Some(buf) = input.strip_prefix("0t") {
+        (buf, Some(3))
+    } else if let Some(buf) = input.strip_prefix("0b") {
+        (buf, Some(2))
     } else {
         (input, None)
     }
@@ -92,7 +92,9 @@ fn parse_numeric_literal_with_both_contexts(
     let (before_rep, repeating_digits) = match caps.name("dot") {
         Some(u) => {
             if u.as_str() == "." && integral.is_empty() {
-                return Err("\"A standalone single dot `.`, optionally followed by exponent\" is forbidden");
+                return Err(
+                    "\"A standalone single dot `.`, optionally followed by exponent\" is forbidden",
+                );
             }
 
             (
