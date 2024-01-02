@@ -7,11 +7,13 @@ A programming language where you can use repeating decimals and periodic continu
 2. Clone this repository
 3. `cargo run`
 
-## Currently supported features
+## Features
 
-See [example.periodicode](./example.periodicode) for the tutorial.
+See [long_tutorial.periodicode](./long_tutorial.periodicode) for the full tutorial.
 
-See [example2.periodicode](./example2.periodicode) for a more concise summary.
+[summary.periodicode](./summary.periodicode) gives a more concise summary.
+
+[literal.periodicode](./literal.periodicode) showcases the capability of numeric literals.
 
 ### Repeating decimals
 
@@ -26,7 +28,7 @@ Natively supports the standard syntax `[3; 7, 15, 1]`
 ### Base freedom
 You can choose what base/radix you use to represent numbers
 
-<!-- - You set the "radix context" with which everything is to be done -->
+- You set the "radix context" with which everything is to be done
 <!-- Supports up to base 25 (so that I can use the letters `pqrstuvwxyz` to serve special purposes) -->
 - Numeric literals support a wide range of radix-specifying prefixes (i.e. `0x` for hexadecimal), to bring a literal with an out-of-context radix
   - `0v`: vigesimal (base 20)

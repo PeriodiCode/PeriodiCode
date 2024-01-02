@@ -1,10 +1,6 @@
-# A concise sample showing what PeriodiCode can do
+# Showcase of the capability of numeric literals
 
-# mid-line comments
-@assert_eq(1, 1) # foo bar
-
-# repeated decimals
-# but with semicolons
+# repeated decimals and semicolons
 .6r142857; @assert_eq($_, 43/70);
 .r142857; @assert_eq($_, 1/7);
 0.1r6; @assert_eq($_, 1/6);
