@@ -23,8 +23,7 @@ $_ + 2
 @assert_eq($_, [1; 78]);
 
 # You can change the global radix-context,
-@set_radix(@hexadecimal);
-beef; @assert_eq($_, 0d48879);
+@set_radix(@hexadecimal); @assert_eq(beef, 0d48879);
 @set_radix(@decimal);
 
 # and you can also introduce a local radix-context
@@ -33,7 +32,7 @@ beef; @assert_eq($_, 0d48879);
 
 # What follows the `p` is interpreted using the radix-context
 @assert_eq(0x1.p10, 1024);
-@senary { 0x1.p10 }; @assert_eq($_, 64);
+@assert_eq(@senary { 0x1.p10 }, 64);
 
 # You can load other files
 @load { "literal.periodicode"; "long_tutorial.periodicode" };
