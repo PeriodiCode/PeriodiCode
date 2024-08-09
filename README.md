@@ -1,5 +1,5 @@
 # PeriodiCode
-A programming language where you can use repeating decimals and periodic continued fractions seamlessly (WIP)
+A programming language where you can use repeating decimals and periodic continued fractions seamlessly, with maximum freedom of choice in which radix to use (WIP)
 
 ## Trying it out
 
